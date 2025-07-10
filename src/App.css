@@ -1,5 +1,35 @@
 .App {
   text-align: center;
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.App-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 20px;
+  color: white;
+  margin-bottom: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.App-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.App-header p {
+  margin: 0;
+  font-size: 1.2rem;
+  opacity: 0.9;
+  font-weight: 300;
+}
+
+main {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .App-logo {
@@ -13,17 +43,6 @@
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
 .App-link {
   color: #61dafb;
 }
@@ -34,5 +53,24 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .App-header {
+    padding: 30px 15px;
+  }
+  
+  .App-header h1 {
+    font-size: 2rem;
+  }
+  
+  .App-header p {
+    font-size: 1rem;
+  }
+  
+  main {
+    padding: 15px;
   }
 }
