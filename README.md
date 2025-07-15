@@ -1,70 +1,125 @@
-# Getting Started with Create React App
+# 🎵 GrooveNomad - Application Musicale
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 🚀 Démarrage Rapide
 
-## Available Scripts
+### 🎯 Commande unique (Recommandée)
+```bash
+npm run dev
+```
+Cette commande lance **automatiquement** :
+- 🔧 **Backend** sur le port 5000 (bleu)
+- 🎨 **Frontend** sur le port 3001 (vert)
 
-In the project directory, you can run:
+### 🔧 Commandes alternatives
+```bash
+# Lancer seulement le backend
+npm run dev:backend
 
-### `npm start`
+# Lancer seulement le frontend  
+npm run dev:frontend
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+# Lancer le frontend normalement
+npm start
+```
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🌐 URLs
+- **Frontend** : http://localhost:3001
+- **Backend** : http://localhost:5000/api
+- **Test Backend** : http://localhost:5000/api/health
 
-### `npm test`
+## 📋 Fonctionnalités
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### ✅ Authentification complète
+- **Inscription** avec validation
+- **Connexion** sécurisée
+- **Base de données** Neon PostgreSQL
+- **JWT** tokens avec expiration 24h
 
-### `npm run build`
+### ✅ Navigation intelligente
+- **Non connecté** : "SE CONNECTER"
+- **Connecté** : "MON COMPTE" + menu déroulant
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### ✅ Design moderne
+- **Responsive** (Mobile, Tablette, Desktop)
+- **Icônes SVG** authentiques
+- **Glassmorphism** effects
+- **Animations** fluides
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛠️ Technologies
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Frontend
+- React 18
+- React Router
+- Axios
+- React Icons
+- CSS3 (Glassmorphism)
 
-### `npm run eject`
+### Backend
+- Node.js + Express
+- PostgreSQL (Neon)
+- JWT + bcrypt
+- CORS
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 📊 Structure des dossiers
+```
+GrooveNomadFront/groove-nomad-front/
+├── backend/           # API Backend
+│   ├── server.js      # Serveur Express
+│   └── package.json   # Dépendances backend
+├── src/               # Code React
+│   ├── components/    # Composants React
+│   ├── context/       # Context API
+│   └── ...
+├── public/            # Fichiers statiques
+└── package.json       # Config principale
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 🔐 Base de données
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Table utilisateurs
+```sql
+CREATE TABLE utilisateurs (
+    id SERIAL PRIMARY KEY,
+    nom VARCHAR(100) NOT NULL,
+    prenom VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    mot_de_passe_hash VARCHAR(255) NOT NULL,
+    date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    dernier_login TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'actif'
+);
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 🎯 Test de l'authentification
 
-## Learn More
+1. **Lancer l'app** : `npm run dev`
+2. **Créer un compte** : http://localhost:3001/inscription
+3. **Se connecter** : http://localhost:3001/connexion
+4. **Vérifier** : La navbar affiche "MON COMPTE"
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🐛 Dépannage
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Problèmes de démarrage
+```bash
+# Nettoyer les caches
+npm run dev
 
-### Code Splitting
+# Si erreur de port
+lsof -ti:3001 | xargs kill -9
+lsof -ti:5000 | xargs kill -9
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Problèmes d'authentification
+- Vérifier que le backend est démarré
+- Tester l'API : http://localhost:5000/api/health
+- Vider le localStorage et se reconnecter
 
-### Analyzing the Bundle Size
+## 📱 Responsive Design
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- **Mobile** : < 480px
+- **Tablette** : 480px - 768px  
+- **Desktop** : > 768px
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**🎵 GrooveNomad - Découvrez votre Musique, Explorez votre Monde**

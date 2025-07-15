@@ -1,0 +1,363 @@
+.inscription-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+}
+
+.inscription-container {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+  padding: 40px;
+}
+
+.back-to-home {
+  margin-bottom: 20px;
+}
+
+.back-link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.back-link:hover {
+  color: #fc6c34;
+}
+
+.inscription-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.inscription-title {
+  font-size: 2.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 10px 0;
+  font-weight: bold;
+}
+
+.inscription-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.inscription-form {
+  margin-bottom: 30px;
+}
+
+.error-message {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+  font-size: 14px;
+  text-align: center;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: white !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  font-size: 1rem;
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+  transition: border-color 0.3s, box-shadow 0.3s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #fc6c34;
+  box-shadow: 0 0 0 3px rgba(252, 108, 52, 0.2);
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.inscription-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.inscription-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(231, 76, 60, 0.3);
+}
+
+.inscription-btn:active {
+  transform: translateY(0);
+}
+
+.inscription-footer {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.inscription-footer p {
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.connexion-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 15px 20px;
+  border: 2px solid #ecf0f1;
+  border-radius: 25px;
+  background: white;
+  color: #8e44ad;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s, transform 0.3s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.connexion-link:hover {
+  border-color: #8e44ad;
+  background: #f8f9fa;
+  transform: translateY(-2px);
+}
+
+.social-inscription {
+  margin-top: 30px;
+}
+
+.divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.divider span {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.social-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border: 2px solid #ecf0f1;
+  border-radius: 10px;
+  background: white;
+  color: #2c3e50;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.social-btn:hover {
+  border-color: #8e44ad;
+  background: #f8f9fa;
+}
+
+.social-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #8e44ad;
+}
+
+.facebook-btn .social-icon {
+  color: #8e44ad;
+  font-family: 'Arial', sans-serif;
+  font-weight: 900;
+}
+
+.google-btn .social-icon {
+  color: #8e44ad;
+  font-family: 'Arial', sans-serif;
+  font-weight: 900;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .inscription-page {
+    padding: 15px;
+  }
+  
+  .inscription-container {
+    padding: 30px 25px;
+    max-width: 450px;
+  }
+  
+  .inscription-title {
+    font-size: 2rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .social-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .inscription-container {
+    padding: 25px 20px;
+  }
+  
+  .inscription-title {
+    font-size: 1.8rem;
+  }
+  
+  .inscription-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .form-input {
+    padding: 12px;
+  }
+  
+  .inscription-btn {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  
+  .social-btn {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Indicateurs de validation des mots de passe */
+.password-strength {
+  margin-top: 5px;
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.password-strength.weak {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.password-strength.medium {
+  background: rgba(243, 156, 18, 0.1);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.password-strength.strong {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.password-match-indicator {
+  margin-top: 5px;
+  font-size: 0.85rem;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.password-match-indicator.match {
+  background: rgba(46, 204, 113, 0.1);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.2);
+}
+
+.password-match-indicator.no-match {
+  background: rgba(231, 76, 60, 0.1);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+/* Styles pour les champs de mot de passe */
+.form-input.password-match {
+  border-color: #2ecc71 !important;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.1) !important;
+}
+
+.form-input.password-no-match {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+} 
