@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaPaperPlane, FaRobot, FaUser, FaArrowLeft } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
 import './Chatbot.css';
 
 const Chatbot = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -151,7 +153,15 @@ const Chatbot = () => {
           {messages.map((message) => (
             <div key={message.id} className={`message ${message.sender}`}>
               <div className="message-avatar">
-                {message.sender === 'bot' ? <img src="/teslabot.png" alt="GroovBot" className="message-avatar-img" /> : <FaUser />}
+                {message.sender === 'bot' ? (
+                  <img src="/teslabot.png" alt="GroovBot" className="message-avatar-img" />
+                ) : (
+                  user && user.photo ? (
+                    <img src={user.photo} alt="Photo de profil" className="message-avatar-img" />
+                  ) : (
+                    <FaUser />
+                  )
+                )}
               </div>
               <div className="message-content">
                 <div className="message-bubble">
