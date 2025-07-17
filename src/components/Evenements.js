@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaFilter, FaMapMarkerAlt, FaCalendarAlt, FaEye, FaHeart, FaMusic, FaGlobe, FaUsers, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaMapMarkerAlt, FaCalendarAlt, FaEye, FaHeart, FaMusic, FaGlobe, FaUsers, FaTwitter, FaInstagram, FaLinkedin, FaWhatsapp } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import { useAuth } from '../context/AuthContext';
+import { getFestivalsFromAirtable } from '../services/airtableService';
+import testAirtableConnection from '../testAirtable';
 import { 
   Card, 
   CardContent, 
@@ -16,7 +18,10 @@ import {
   Container,
   Grid,
   Stack,
-  IconButton
+  IconButton,
+  Alert,
+  CircularProgress,
+  Pagination
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -140,6 +145,48 @@ const GlassFooter = styled(Box)(({ theme }) => ({
   width: '100%',
 }));
 
+// Styled component pour la pagination
+const StyledPagination = styled(Pagination)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  marginTop: theme.spacing(4),
+  marginBottom: theme.spacing(8),
+  padding: theme.spacing(2),
+  background: 'rgba(255, 255, 255, 0.05)',
+  backdropFilter: 'blur(10px)',
+  borderRadius: '20px',
+  boxShadow: '0 8px 32px rgba(31, 38, 135, 0.2)',
+  border: '1px solid rgba(255, 255, 255, 0.1)',
+  '& .MuiPaginationItem-root': {
+    color: '#ffffff',
+    fontSize: '1.1rem',
+    minWidth: '40px',
+    height: '40px',
+    margin: '0 4px',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      borderColor: '#fc6c34',
+    },
+    '&.Mui-selected': {
+      backgroundColor: '#fc6c34',
+      color: '#ffffff',
+      fontWeight: 'bold',
+      '&:hover': {
+        backgroundColor: '#e85a20',
+      },
+    },
+  },
+  [theme.breakpoints.down('sm')]: {
+    '& .MuiPaginationItem-root': {
+      minWidth: '36px',
+      height: '36px',
+      fontSize: '1rem',
+      margin: '0 2px',
+    },
+  },
+}));
+
 const Evenements = () => {
   const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
@@ -152,313 +199,250 @@ const Evenements = () => {
   });
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [festivals, setFestivals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState('');
+  
+  // Nouveaux états pour la pagination
+  const [page, setPage] = useState(1);
+  const eventsPerPage = 6;
 
-  // Données des festivals avec media, intéressés et images
-  const festivals = useMemo(() => [
-    {
-      id: 1,
-      nom: "Tomorrowland",
-      dates: "2025-07-08 - 2025-07-10",
-      genre: "Trance",
-      ville: "West Evan",
-      pays: "Canada",
-      lieu: "West Evan Indoor Club",
-      capacite: 5961,
-      siteWeb: "https://www.tomorrowland.com",
-      duree: 121,
-      hebergement: ["Glamping"],
-      aeroport: "West Evan International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "Camping Pass",
-      devise: "EUR",
-      prix: [69, 193, 563],
-      image: "/fete_bg.png",
-      interessees: 2847
-    },
-    {
-      id: 2,
-      nom: "Awakenings Festival",
-      dates: "2025-07-08 - 2025-07-14",
-      genre: "Trance",
-      ville: "Coleside",
-      pays: "Germany",
-      lieu: "Coleside Open Air",
-      capacite: 50713,
-      siteWeb: "https://www.awakeningsfestival.com",
-      duree: 120,
-      hebergement: ["Camping"],
-      aeroport: "Coleside International Airport",
-      typeEvenement: "Desert gathering",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "USD",
-      prix: [51, 165, 583],
-      image: "/wallpaper.png",
-      interessees: 4281
-    },
-    {
-      id: 3,
-      nom: "Ultra Music Festival",
-      dates: "2025-07-08 - 2025-07-14",
-      genre: "Trance",
-      ville: "Donaldstad",
-      pays: "India",
-      lieu: "Donaldstad Indoor Club",
-      capacite: 41877,
-      siteWeb: "https://www.ultramusicfestival.com",
-      duree: 139,
-      hebergement: ["Camping"],
-      aeroport: "Donaldstad International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "USD",
-      prix: [60, 174, 575],
-      image: "/background_image.png",
-      interessees: 3652
-    },
-    {
-      id: 4,
-      nom: "Time Warp",
-      dates: "2025-07-08 - 2025-07-11",
-      genre: "Trance",
-      ville: "North Kimberlyshire",
-      pays: "India",
-      lieu: "North Kimberlyshire Open Air",
-      capacite: 77080,
-      siteWeb: "https://www.timewarp.de",
-      duree: 180,
-      hebergement: ["Camping"],
-      aeroport: "North Kimberlyshire International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "EUR",
-      prix: [58, 252, 531],
-      image: "/background_chat.png",
-      interessees: 1923
-    },
-    {
-      id: 5,
-      nom: "Creamfields",
-      dates: "2025-07-08 - 2025-07-11",
-      genre: "Trance",
-      ville: "Sandrahaven",
-      pays: "India",
-      lieu: "Sandrahaven Open Air",
-      capacite: 72871,
-      siteWeb: "https://www.creamfields.com",
-      duree: 88,
-      hebergement: ["Camping"],
-      aeroport: "Sandrahaven International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "GBP",
-      prix: [75, 202, 572],
-      image: "/fete_bg.png",
-      interessees: 5647
-    },
-    {
-      id: 6,
-      nom: "Sónar",
-      dates: "2025-07-08 - 2025-07-11",
-      genre: "Trance",
-      ville: "Petersbury",
-      pays: "Germany",
-      lieu: "Petersbury Open Air",
-      capacite: 65584,
-      siteWeb: "https://www.sonar.es",
-      duree: 196,
-      hebergement: ["Camping"],
-      aeroport: "Petersbury International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "EUR",
-      prix: [66, 178, 521],
-      image: "/wallpaper.png",
-      interessees: 2134
-    },
-    {
-      id: 7,
-      nom: "EXIT Festival",
-      dates: "2025-07-08 - 2025-07-11",
-      genre: "Trance",
-      ville: "Bryantport",
-      pays: "India",
-      lieu: "Bryantport Open Air",
-      capacite: 23928,
-      siteWeb: "https://www.exitfest.org",
-      duree: 213,
-      hebergement: ["Camping"],
-      aeroport: "Bryantport International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "EUR",
-      prix: [50, 163, 556],
-      image: "/background_image.png",
-      interessees: 3456
-    },
-    {
-      id: 8,
-      nom: "Dekmantel",
-      dates: "2025-07-08 - 2025-07-11",
-      genre: "Trance",
-      ville: "New Jamietown",
-      pays: "India",
-      lieu: "New Jamietown Open Air",
-      capacite: 41952,
-      siteWeb: "https://www.dekmantel.nl",
-      duree: 244,
-      hebergement: ["Camping"],
-      aeroport: "New Jamietown International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "EUR",
-      prix: [53, 196, 558],
-      image: "/background_chat.png",
-      interessees: 1789
-    },
-    {
-      id: 9,
-      nom: "Burning Man",
-      dates: "2025-07-08 - 2025-07-15",
-      genre: "Trance",
-      ville: "Port Caseyland",
-      pays: "India",
-      lieu: "Port Caseyland Open Air",
-      capacite: 6088,
-      siteWeb: "https://www.burningman.org",
-      duree: 206,
-      hebergement: ["Camping"],
-      aeroport: "Port Caseyland International Airport",
-      typeEvenement: "Desert gathering",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "USD",
-      prix: [68, 175, 546],
-      image: "/fete_bg.png",
-      interessees: 7823
-    },
-    {
-      id: 10,
-      nom: "Electric Daisy Carnival",
-      dates: "2025-07-08 - 2025-07-11",
-      genre: "Trance",
-      ville: "Stephenshire",
-      pays: "India",
-      lieu: "Stephenshire Open Air",
-      capacite: 18845,
-      siteWeb: "https://www.electricdaisycarnival.com",
-      duree: 221,
-      hebergement: ["Camping"],
-      aeroport: "Stephenshire International Airport",
-      typeEvenement: "One-stage intimate",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "General Admission",
-      devise: "USD",
-      prix: [59, 197, 524],
-      image: "/wallpaper.png",
-      interessees: 4567
-    },
-    {
-      id: 11,
-      nom: "Coachella",
-      dates: "2025-07-08 - 2025-07-12",
-      genre: "Trance",
-      ville: "South Gerald",
-      pays: "India",
-      lieu: "South Gerald Open Air",
-      capacite: 73731,
-      siteWeb: "https://www.coachella.com",
-      duree: 226,
-      hebergement: ["Hotel", "Airbnb"],
-      aeroport: "South Gerald International Airport",
-      typeEvenement: "Desert gathering",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "Camping Pass",
-      devise: "EUR",
-      prix: [69, 252, 538],
-      image: "/background_image.png",
-      interessees: 8912
-    },
-    {
-      id: 12,
-      nom: "Primavera Sound",
-      dates: "2025-07-08 - 2025-07-14",
-      genre: "Trance",
-      ville: "South Gerald",
-      pays: "India",
-      lieu: "South Gerald Open Air",
-      capacite: 73731,
-      siteWeb: "https://www.primaverasound.com",
-      duree: 226,
-      hebergement: ["Hotel", "Airbnb"],
-      aeroport: "South Gerald International Airport",
-      typeEvenement: "Desert gathering",
-      description: "Renowned for immersive experience and world-class DJs.",
-      typeBillet: "Camping Pass",
-      devise: "EUR",
-      prix: [69, 252, 538],
-      image: "/background_chat.png",
-      interessees: 3241
+  // Réinitialiser la page quand les filtres ou la recherche changent
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, activeFilters]);
+
+  // Fonction pour charger les données des événements depuis Airtable
+  const loadEventData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      setDebugInfo('Tentative de connexion à Airtable...');
+      
+      console.log('🚀 Début du chargement des festivals depuis Airtable...');
+      
+      // Test de connexion d'abord
+      await testAirtableConnection();
+      
+      // Récupérer les données depuis Airtable
+      console.log('📡 Récupération des données...');
+      const airtableEvents = await getFestivalsFromAirtable();
+      
+      console.log('📋 Festivals récupérés bruts:', airtableEvents.length);
+      setDebugInfo(`${airtableEvents.length} festivals récupérés depuis Airtable`);
+      
+      if (airtableEvents.length === 0) {
+        setError('Aucun festival trouvé dans la table Airtable. Vérifiez que la table "festivals" contient des données.');
+        setLoading(false);
+        return;
+      }
+      
+      // Filtrer les événements pour ne garder que ceux qui ont les champs obligatoires
+      const validEvents = airtableEvents.filter(event => {
+        const isValid = event.nom && event.genre && event.ville && event.pays;
+        if (!isValid) {
+          console.warn('⚠️ Événement exclu (champs manquants):', event);
+        }
+        return isValid;
+      });
+      
+      console.log('✅ Festivals valides:', validEvents.length);
+      setDebugInfo(`${validEvents.length} festivals valides chargés`);
+      
+      setFestivals(validEvents);
+      setLoading(false);
+      
+      if (validEvents.length === 0) {
+        setError('Aucun festival valide trouvé. Vérifiez que vos festivals ont tous les champs requis : nom, genre, ville, pays.');
+      }
+      
+    } catch (error) {
+      console.error('❌ Erreur lors du chargement des événements:', error);
+      const errorMessage = error.message || 'Erreur inconnue';
+      setError(`Impossible de charger les événements depuis Airtable: ${errorMessage}`);
+      setDebugInfo(`Erreur: ${errorMessage}`);
+      setLoading(false);
+      
+      // En cas d'erreur, utiliser des données de fallback
+      console.log('🔄 Utilisation des données de fallback...');
+      const fallbackEvents = [
+        {
+          id: 'fallback-1',
+          nom: "Tomorrowland (Fallback)",
+          dateDebut: "2025-07-18",
+          dateFin: "2025-07-21",
+          genre: "Trance",
+          ville: "Boom",
+          pays: "Belgium",
+          lieu: "De Schorre",
+          capacite: 400000,
+          siteWeb: "https://www.tomorrowland.com",
+          duree: 3,
+          hebergement: ["Camping", "Glamping"],
+          aeroport: "Brussels International Airport",
+          typeEvenement: "Multi-stage",
+          description: "Le festival de musique électronique le plus magique au monde",
+          typeBillet: "Weekend Pass",
+          devise: "EUR",
+          prix: [299, 399, 499],
+          image: "/fete_bg.png",
+          nombreLikes: null,
+          dates: "2025-07-18 - 2025-07-21",
+          interessees: null
+        }
+      ];
+      
+      setFestivals(fallbackEvents);
     }
-  ], []);
-
-  // Options de filtres basées sur les données
-  const filterOptions = {
-    genre: [
-      { id: 'Trance', label: 'Trance', color: '#3498db' },
-      { id: 'Hardstyle', label: 'Hardstyle', color: '#e74c3c' },
-      { id: 'EDM', label: 'EDM', color: '#f39c12' },
-      { id: 'Techno', label: 'Techno', color: '#9b59b6' },
-      { id: 'House', label: 'House', color: '#1abc9c' },
-      { id: 'Psytrance', label: 'Psytrance', color: '#8e44ad' }
-    ],
-    pays: [
-      { id: 'Canada', label: 'Canada' },
-      { id: 'Germany', label: 'Allemagne' },
-      { id: 'USA', label: 'États-Unis' },
-      { id: 'Italy', label: 'Italie' },
-      { id: 'Serbia', label: 'Serbie' },
-      { id: 'Vietnam', label: 'Vietnam' },
-      { id: 'Spain', label: 'Espagne' },
-      { id: 'Thailand', label: 'Thaïlande' },
-      { id: 'UK', label: 'Royaume-Uni' },
-      { id: 'India', label: 'Inde' },
-      { id: 'Belgium', label: 'Belgique' },
-      { id: 'Portugal', label: 'Portugal' },
-      { id: 'Hungary', label: 'Hongrie' },
-      { id: 'Australia', label: 'Australie' },
-      { id: 'Switzerland', label: 'Suisse' },
-      { id: 'Iceland', label: 'Islande' },
-      { id: 'Netherlands', label: 'Pays-Bas' },
-      { id: 'Croatia', label: 'Croatie' },
-      { id: 'France', label: 'France' }
-    ],
-    hebergement: [
-      { id: 'Glamping', label: 'Glamping', icon: '🏕️' },
-      { id: 'Camping', label: 'Camping', icon: '⛺' },
-      { id: 'Hotel', label: 'Hôtel', icon: '🏨' },
-      { id: 'Bungalow', label: 'Bungalow', icon: '🏠' },
-      { id: 'Airbnb', label: 'Airbnb', icon: '🏡' }
-    ],
-    typeEvenement: [
-      { id: 'One-stage intimate', label: 'Scène unique intime' },
-      { id: 'Multi-stage', label: 'Multi-scènes' },
-      { id: 'Desert gathering', label: 'Rassemblement désert' },
-      { id: 'Forest rave', label: 'Rave forestière' }
-    ],
-    devise: [
-      { id: 'EUR', label: 'Euro (€)' },
-      { id: 'USD', label: 'Dollar ($)' },
-      { id: 'GBP', label: 'Livre (£)' }
-    ]
   };
+
+  // Charger les données au montage du composant
+  useEffect(() => {
+    loadEventData();
+  }, []);
+
+  // Fonction pour mettre à jour un événement spécifique
+  const updateEvent = (eventId, updates) => {
+    setFestivals(prev => 
+      prev.map(event => 
+        event.id === eventId 
+          ? { ...event, ...updates }
+          : event
+      )
+    );
+  };
+
+  // Fonction pour ajouter un nouvel événement
+  const addEvent = (newEvent) => {
+    const eventWithId = {
+      ...newEvent,
+      id: Date.now(), // Simple ID génération
+      dates: `${newEvent.dateDebut} - ${newEvent.dateFin}`,
+      interessees: newEvent.nombreLikes || 0
+    };
+    setFestivals(prev => [...prev, eventWithId]);
+  };
+
+  // Fonction pour supprimer un événement
+  const deleteEvent = (eventId) => {
+    setFestivals(prev => prev.filter(event => event.id !== eventId));
+  };
+
+  // Fonction pour recharger les données
+  const reloadData = () => {
+    loadEventData();
+  };
+
+  // Variables pour les propriétés des événements
+  const getEventProperties = (event) => ({
+    nomEvenement: event.nom,
+    lieuEvenement: event.lieu,
+    datesEvenement: event.dates,
+    villeEvenement: event.ville,
+    paysEvenement: event.pays,
+    styleEvenement: event.genre,
+    nombreLikesEvenement: null,
+    imageEvenement: event.image,
+    capaciteEvenement: event.capacite,
+    dureeEvenement: event.duree,
+    typeEvenement: event.typeEvenement,
+    deviseEvenement: event.devise,
+    prixEvenement: event.prix,
+    descriptionEvenement: event.description,
+    siteWebEvenement: event.siteWeb,
+    lineupEvenement: event.lineup || [],
+    mediasEvenement: event.medias || []
+  });
+
+  // Générer les options de filtres dynamiquement basées sur les données d'Airtable
+  const generateFilterOptions = () => {
+    const genres = [...new Set(festivals.map(f => f.genre).filter(Boolean))];
+    const pays = [...new Set(festivals.map(f => f.pays).filter(Boolean))];
+    const hebergements = [...new Set(festivals.flatMap(f => f.hebergement || []))];
+    const typesEvenement = [...new Set(festivals.map(f => f.typeEvenement).filter(Boolean))];
+    const devises = [...new Set(festivals.map(f => f.devise).filter(Boolean))];
+
+    const genreColors = {
+      'Trance': '#3498db',
+      'Hardstyle': '#e74c3c',
+      'EDM': '#f39c12',
+      'Techno': '#9b59b6',
+      'House': '#1abc9c',
+      'Psytrance': '#8e44ad'
+    };
+
+    const paysLabels = {
+      'Canada': 'Canada',
+      'Germany': 'Allemagne',
+      'USA': 'États-Unis',
+      'Italy': 'Italie',
+      'Serbia': 'Serbie',
+      'Vietnam': 'Vietnam',
+      'Spain': 'Espagne',
+      'Thailand': 'Thaïlande',
+      'UK': 'Royaume-Uni',
+      'India': 'Inde',
+      'Belgium': 'Belgique',
+      'Portugal': 'Portugal',
+      'Hungary': 'Hongrie',
+      'Australia': 'Australie',
+      'Switzerland': 'Suisse',
+      'Iceland': 'Islande',
+      'Netherlands': 'Pays-Bas',
+      'Croatia': 'Croatie',
+      'France': 'France'
+    };
+
+    const hebergementIcons = {
+      'Glamping': '🏕️',
+      'Camping': '⛺',
+      'Hotel': '🏨',
+      'Bungalow': '🏠',
+      'Airbnb': '🏡'
+    };
+
+    const typeEvenementLabels = {
+      'One-stage intimate': 'Scène unique intime',
+      'Multi-stage': 'Multi-scènes',
+      'Desert gathering': 'Rassemblement désert',
+      'Forest rave': 'Rave forestière'
+    };
+
+    const deviseLabels = {
+      'EUR': 'Euro (€)',
+      'USD': 'Dollar ($)',
+      'GBP': 'Livre (£)'
+    };
+
+    return {
+      genre: genres.map(genre => ({
+        id: genre,
+        label: genre,
+        color: genreColors[genre] || '#3498db'
+      })),
+      pays: pays.map(pays => ({
+        id: pays,
+        label: paysLabels[pays] || pays
+      })),
+      hebergement: hebergements.map(heb => ({
+        id: heb,
+        label: heb,
+        icon: hebergementIcons[heb] || '🏠'
+      })),
+      typeEvenement: typesEvenement.map(type => ({
+        id: type,
+        label: typeEvenementLabels[type] || type
+      })),
+      devise: devises.map(devise => ({
+        id: devise,
+        label: deviseLabels[devise] || devise
+      }))
+    };
+  };
+
+  // Options de filtres basées sur les données d'Airtable
+  const filterOptions = useMemo(() => generateFilterOptions(), [festivals]);
 
   // Filtrer les événements
   useEffect(() => {
@@ -466,26 +450,27 @@ const Evenements = () => {
 
     // Filtre par recherche textuelle
     if (searchTerm) {
-      filtered = filtered.filter(event => 
-        event.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.ville.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.pays.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.genre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = filtered.filter(event => {
+        const properties = getEventProperties(event);
+        return properties.nomEvenement.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               properties.villeEvenement.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               properties.paysEvenement.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               properties.styleEvenement.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               properties.descriptionEvenement.toLowerCase().includes(searchTerm.toLowerCase());
+      });
     }
 
     // Filtre par genre
     if (activeFilters.genre.length > 0) {
       filtered = filtered.filter(event => 
-        activeFilters.genre.includes(event.genre)
+        activeFilters.genre.includes(getEventProperties(event).styleEvenement)
       );
     }
 
     // Filtre par pays
     if (activeFilters.pays.length > 0) {
       filtered = filtered.filter(event => 
-        activeFilters.pays.includes(event.pays)
+        activeFilters.pays.includes(getEventProperties(event).paysEvenement)
       );
     }
 
@@ -499,14 +484,14 @@ const Evenements = () => {
     // Filtre par type d'événement
     if (activeFilters.typeEvenement.length > 0) {
       filtered = filtered.filter(event => 
-        activeFilters.typeEvenement.includes(event.typeEvenement)
+        activeFilters.typeEvenement.includes(getEventProperties(event).typeEvenement)
       );
     }
 
     // Filtre par devise
     if (activeFilters.devise.length > 0) {
       filtered = filtered.filter(event => 
-        activeFilters.devise.includes(event.devise)
+        activeFilters.devise.includes(getEventProperties(event).deviseEvenement)
       );
     }
 
@@ -517,6 +502,22 @@ const Evenements = () => {
   useEffect(() => {
     setFilteredEvents(festivals);
   }, [festivals]);
+
+  // Calcul des événements à afficher pour la page courante
+  const currentEvents = useMemo(() => {
+    const startIndex = (page - 1) * eventsPerPage;
+    return filteredEvents.slice(startIndex, startIndex + eventsPerPage);
+  }, [filteredEvents, page]);
+
+  // Calcul du nombre total de pages
+  const pageCount = Math.ceil(filteredEvents.length / eventsPerPage);
+
+  // Gestionnaire de changement de page
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage);
+    // Scroll vers le haut de la page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   // Gérer les filtres
   const toggleFilter = (category, filterId) => {
@@ -540,7 +541,7 @@ const Evenements = () => {
     setSearchTerm('');
   };
 
-  // Formater les dates en format court
+  // Formater les dates en format court avec l'année
   const formatDateRangeShort = (dateString) => {
     const [startDate, endDate] = dateString.split(' - ');
     const start = new Date(startDate);
@@ -549,10 +550,19 @@ const Evenements = () => {
     const formatDateShort = (date) => {
       const day = date.getDate();
       const month = date.toLocaleDateString('fr-FR', { month: 'short' });
-      return `${day} ${month}.`;
+      const year = date.getFullYear();
+      return `${day} ${month} ${year}`;
     };
     
-    return `${formatDateShort(start)} - ${formatDateShort(end)}`;
+    // Si les dates sont dans la même année, afficher l'année seulement à la fin
+    if (start.getFullYear() === end.getFullYear()) {
+      const startFormatted = `${start.getDate()} ${start.toLocaleDateString('fr-FR', { month: 'short' })}`;
+      const endFormatted = `${end.getDate()} ${end.toLocaleDateString('fr-FR', { month: 'short' })} ${end.getFullYear()}`;
+      return `${startFormatted} - ${endFormatted}`;
+    } else {
+      // Si les dates sont dans des années différentes, afficher l'année pour chaque date
+      return `${formatDateShort(start)} - ${formatDateShort(end)}`;
+    }
   };
 
   // Gérer l'affichage des détails
@@ -571,6 +581,35 @@ const Evenements = () => {
       href: isAuthenticated ? '/mon-compte' : '/connexion' 
     },
   ];
+
+  // Afficher un loader pendant le chargement
+  if (loading) {
+    return (
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundImage: `url(${process.env.PUBLIC_URL}/bg.png)`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          gap: 2
+        }}
+      >
+        <CircularProgress size={60} sx={{ color: '#fc6c34' }} />
+        <Typography variant="h6" sx={{ color: 'white' }}>
+          Chargement des festivals depuis Airtable...
+        </Typography>
+        {debugInfo && (
+          <Typography variant="body2" sx={{ color: 'white', mt: 1 }}>
+            {debugInfo}
+          </Typography>
+        )}
+      </Box>
+    );
+  }
 
   return (
     <Box 
@@ -611,7 +650,27 @@ const Evenements = () => {
           <h1 className="hero-title">
             Découvrez les <span className="highlight">Meilleurs Festivals</span> Électroniques
           </h1>
-
+          {error && (
+            <Alert 
+              severity="warning" 
+              sx={{ mt: 2, maxWidth: '500px', mx: 'auto' }}
+              action={
+                <Button color="inherit" size="small" onClick={reloadData}>
+                  Réessayer
+                </Button>
+              }
+            >
+              {error}
+            </Alert>
+          )}
+          {debugInfo && (
+            <Alert 
+              severity="info" 
+              sx={{ mt: 2, maxWidth: '500px', mx: 'auto' }}
+            >
+              {debugInfo}
+            </Alert>
+          )}
         </div>
       </section>
 
@@ -713,181 +772,277 @@ const Evenements = () => {
 
       {/* Events Grid */}
       <Container maxWidth="lg" sx={{ py: 8, flex: 1, paddingBottom: '120px' }}>
-        <Grid container spacing={3}>
-          {filteredEvents.map(event => (
-            <Grid item xs={12} sm={6} md={4} key={event.id}>
-              <Card
-                sx={{
-                  maxWidth: 345,
-                  mx: 'auto',
-                  background: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
-                  borderRadius: '30px',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  boxShadow: '0 8px 32px 0 rgba(31,38,135,0.1)',
-                  transition: 'all 0.3s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    background: 'rgba(255,255,255,0.15)',
-                    boxShadow: '0 16px 40px 0 rgba(31,38,135,0.15)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                  },
-                }}
-              >
-                <CardActionArea component={Link} to={`/evenements/${event.id}`}>
-                  <CardMedia
-                    component="img"
-                    height="200"
-                    image={event.image}
-                    alt={event.nom}
+        {festivals.length === 0 && !loading ? (
+          <Box sx={{ 
+            textAlign: 'center', 
+            py: 8,
+            color: 'text.secondary'
+          }}>
+            <FaSearch style={{ fontSize: '3rem', marginBottom: '1rem' }} />
+            <Typography variant="h5" gutterBottom>
+              Aucun festival trouvé
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              Aucun festival n'a été trouvé dans la base de données Airtable
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={reloadData}
+              sx={{
+                backgroundColor: '#fc6c34',
+                '&:hover': {
+                  backgroundColor: '#c8501a',
+                },
+              }}
+            >
+              Recharger les données
+            </Button>
+          </Box>
+        ) : (
+          <>
+            <Grid container spacing={3}>
+              {currentEvents.map(event => {
+                // Récupérer les propriétés de l'événement comme variables
+                const {
+                  nomEvenement,
+                  lieuEvenement,
+                  datesEvenement,
+                  villeEvenement,
+                  paysEvenement,
+                  styleEvenement,
+                  nombreLikesEvenement,
+                  imageEvenement,
+                  prixEvenement,
+                  descriptionEvenement
+                } = getEventProperties(event);
+
+                return (
+                  <Grid item xs={12} sm={6} md={4} key={event.id}>
+                    <Card
+                      sx={{
+                        maxWidth: 345,
+                        mx: 'auto',
+                        background: 'rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        borderRadius: '30px',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        boxShadow: '0 8px 32px 0 rgba(31,38,135,0.1)',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          background: 'rgba(255,255,255,0.15)',
+                          boxShadow: '0 16px 40px 0 rgba(31,38,135,0.15)',
+                          border: '1px solid rgba(255,255,255,0.3)',
+                        },
+                      }}
+                    >
+                      <CardActionArea component={Link} to={`/evenements/${event.id}`}>
+                        <CardMedia
+                          component="img"
+                          height="200"
+                          image={imageEvenement}
+                          alt={nomEvenement}
+                          sx={{
+                            borderBottom: '1px solid rgba(255,255,255,0.1)'
+                          }}
+                          onError={(e) => {
+                            e.target.src = '/fete_bg.png'; // Image de fallback
+                          }}
+                        />
+                        <CardContent sx={{ 
+                          background: 'rgba(255,255,255,0.05)',
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)',
+                          padding: '1.5rem',
+                        }}>
+                          <Typography 
+                            gutterBottom 
+                            variant="h6" 
+                            component="div"
+                            sx={{ 
+                              color: 'rgba(0,0,0,0.87)',
+                              fontWeight: 600,
+                              fontSize: '1.25rem',
+                              marginBottom: '0.5rem'
+                            }}
+                          >
+                            {nomEvenement}
+                          </Typography>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: 'rgba(0,0,0,0.6)',
+                              marginBottom: '0.75rem',
+                              fontSize: '0.95rem'
+                            }}
+                          >
+                            {lieuEvenement}
+                          </Typography>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            mb: 1.5 
+                          }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                color: 'rgba(0,0,0,0.6)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                                fontSize: '0.9rem'
+                              }}
+                            >
+                              <FaCalendarAlt className="icon-violet" />
+                              {datesEvenement ? formatDateRangeShort(datesEvenement) : 'Dates à venir'}
+                            </Typography>
+                            <Typography 
+                              variant="body1" 
+                              sx={{ 
+                                display: 'none'
+                              }}
+                            >
+                              {prixEvenement && prixEvenement[0] ? `${prixEvenement[0]}€` : 'Prix à déterminer'}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1, 
+                            mb: 1.5,
+                            color: 'rgba(0,0,0,0.6)'
+                          }}>
+                            <FaMapMarkerAlt className="icon-violet" />
+                            <Typography variant="body2">
+                              {villeEvenement}, {paysEvenement}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center' 
+                          }}>
+                            <Chip
+                              label={styleEvenement}
+                              size="small"
+                              sx={{
+                                backgroundColor: 'rgba(110, 31, 157, 0.08)',
+                                color: '#6e1f9d',
+                                fontWeight: 500,
+                                border: '1px solid rgba(110, 31, 157, 0.2)',
+                                height: '24px',
+                              }}
+                            />
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                color: 'rgba(0,0,0,0.6)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5
+                              }}
+                            >
+                              <FaHeart className="icon-orange" />
+                              {nombreLikesEvenement === null ? 'null' : nombreLikesEvenement}
+                            </Typography>
+                          </Box>
+                        </CardContent>
+                      </CardActionArea>
+                      <CardActions sx={{ 
+                        padding: '0.75rem 1rem',
+                        background: 'rgba(255,255,255,0.05)',
+                        borderTop: '1px solid rgba(255,255,255,0.1)'
+                      }}>
+                        <Button 
+                          size="small" 
+                          className="primary"
+                          sx={{ 
+                            fontSize: '0.9rem',
+                            color: '#fc6c34',
+                            '&:hover': {
+                              color: '#6e1f9d',
+                              background: 'rgba(255,255,255,0.1)'
+                            }
+                          }}
+                        >
+                          Partager
+                        </Button>
+                        <Button
+                          size="small"
+                          component={Link}
+                          to={`/evenements/${event.id}`}
+                          className="secondary"
+                          sx={{ 
+                            fontSize: '0.9rem',
+                            color: '#6e1f9d',
+                            marginLeft: 'auto',
+                            '&:hover': {
+                              color: '#fc6c34',
+                              background: 'rgba(255,255,255,0.1)'
+                            }
+                          }}
+                        >
+                          Voir détails
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                );
+              })}
+            </Grid>
+            
+            {/* Pagination */}
+            {pageCount > 1 && (
+              <Box sx={{ 
+                mt: 4, 
+                mb: 8,
+                display: 'flex',
+                justifyContent: 'center',
+                width: '100%',
+                position: 'relative',
+                zIndex: 1
+              }}>
+                <Box sx={{
+                  maxWidth: 'fit-content',
+                  position: 'relative',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: '-10px',
+                    left: '-10px',
+                    right: '-10px',
+                    bottom: '-10px',
+                    background: 'linear-gradient(135deg, rgba(252, 108, 52, 0.2), rgba(255, 255, 255, 0.05))',
+                    borderRadius: '25px',
+                    zIndex: -1,
+                    filter: 'blur(8px)',
+                  }
+                }}>
+                  <StyledPagination 
+                    count={pageCount}
+                    page={page}
+                    onChange={handlePageChange}
+                    size="large"
+                    variant="outlined"
+                    shape="rounded"
+                    showFirstButton
+                    showLastButton
                     sx={{
-                      borderBottom: '1px solid rgba(255,255,255,0.1)'
+                      '& .MuiPagination-ul': {
+                        gap: 1,
+                        justifyContent: 'center',
+                      }
                     }}
                   />
-                  <CardContent sx={{ 
-                    background: 'rgba(255,255,255,0.05)',
-                    backdropFilter: 'blur(10px)',
-                    WebkitBackdropFilter: 'blur(10px)',
-                    padding: '1.5rem',
-                  }}>
-                    <Typography 
-                      gutterBottom 
-                      variant="h6" 
-                      component="div"
-                      sx={{ 
-                        color: 'rgba(0,0,0,0.87)',
-                        fontWeight: 600,
-                        fontSize: '1.25rem',
-                        marginBottom: '0.5rem'
-                      }}
-                    >
-                      {event.nom}
-                    </Typography>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: 'rgba(0,0,0,0.6)',
-                        marginBottom: '0.75rem',
-                        fontSize: '0.95rem'
-                      }}
-                    >
-                      {event.lieu}
-                    </Typography>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center', 
-                      mb: 1.5 
-                    }}>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: 'rgba(0,0,0,0.6)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          fontSize: '0.9rem'
-                        }}
-                      >
-                        <FaCalendarAlt className="icon-violet" />
-                        {formatDateRangeShort(event.dates)}
-                      </Typography>
-                      <Typography 
-                        variant="body1" 
-                        sx={{ 
-                          display: 'none'
-                        }}
-                      >
-                        {event.prix[0]}€
-                      </Typography>
-                    </Box>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: 1, 
-                      mb: 1.5,
-                      color: 'rgba(0,0,0,0.6)'
-                    }}>
-                      <FaMapMarkerAlt className="icon-violet" />
-                      <Typography variant="body2">
-                        {event.ville}, {event.pays}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      justifyContent: 'space-between', 
-                      alignItems: 'center' 
-                    }}>
-                      <Chip
-                        label={event.genre}
-                        size="small"
-                        sx={{
-                          backgroundColor: 'rgba(110, 31, 157, 0.08)',
-                          color: '#6e1f9d',
-                          fontWeight: 500,
-                          border: '1px solid rgba(110, 31, 157, 0.2)',
-                          height: '24px',
-                        }}
-                      />
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: 'rgba(0,0,0,0.6)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.5
-                        }}
-                      >
-                        <FaHeart className="icon-orange" />
-                        {event.interessees}
-                      </Typography>
-                    </Box>
-                  </CardContent>
-                </CardActionArea>
-                <CardActions sx={{ 
-                  padding: '0.75rem 1rem',
-                  background: 'rgba(255,255,255,0.05)',
-                  borderTop: '1px solid rgba(255,255,255,0.1)'
-                }}>
-                  <Button 
-                    size="small" 
-                    className="primary"
-                    sx={{ 
-                      fontSize: '0.9rem',
-                      color: '#fc6c34',
-                      '&:hover': {
-                        color: '#6e1f9d',
-                        background: 'rgba(255,255,255,0.1)'
-                      }
-                    }}
-                  >
-                    Partager
-                  </Button>
-                  <Button
-                    size="small"
-                    component={Link}
-                    to={`/evenements/${event.id}`}
-                    className="secondary"
-                    sx={{ 
-                      fontSize: '0.9rem',
-                      color: '#6e1f9d',
-                      marginLeft: 'auto',
-                      '&:hover': {
-                        color: '#fc6c34',
-                        background: 'rgba(255,255,255,0.1)'
-                      }
-                    }}
-                  >
-                    Voir détails
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                </Box>
+              </Box>
+            )}
+          </>
+        )}
 
-        {filteredEvents.length === 0 && (
+        {filteredEvents.length === 0 && festivals.length > 0 && (
           <Box sx={{ 
             textAlign: 'center', 
             py: 8,
@@ -977,7 +1132,7 @@ const Evenements = () => {
               <Typography variant="h6" gutterBottom>
                 Suivez-nous
               </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                 {[FaTwitter, FaInstagram, FaLinkedin, SiTiktok].map((Icon, index) => (
                   <IconButton
                     key={index}
@@ -990,6 +1145,35 @@ const Evenements = () => {
                     <Icon />
                   </IconButton>
                 ))}
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+                <IconButton
+                  component="a"
+                  href="https://wa.me/your-number"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    '&:hover': { backgroundColor: '#25D366' }, // Couleur verte de WhatsApp
+                  }}
+                >
+                  <FaWhatsapp />
+                </IconButton>
+                <Typography 
+                  variant="body2" 
+                  component="a"
+                  href="https://wa.me/your-number"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    textDecoration: 'none',
+                    '&:hover': { color: '#25D366' },
+                  }}
+                >
+                  Discutez avec nous sur WhatsApp
+                </Typography>
               </Stack>
             </Grid>
           </Grid>

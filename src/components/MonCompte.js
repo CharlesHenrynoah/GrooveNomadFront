@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaKey, FaEdit, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaCalendarAlt, FaSignOutAlt, FaKey, FaEdit, FaTwitter, FaInstagram, FaLinkedin, FaWhatsapp } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -576,7 +576,7 @@ const MonCompte = () => {
               <Typography variant="h6" gutterBottom>
                 Suivez-nous
               </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                 {[FaTwitter, FaInstagram, FaLinkedin, SiTiktok].map((Icon, index) => (
                   <IconButton
                     key={index}
@@ -589,6 +589,35 @@ const MonCompte = () => {
                     <Icon />
                   </IconButton>
                 ))}
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+                <IconButton
+                  component="a"
+                  href="https://wa.me/your-number"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    '&:hover': { backgroundColor: '#25D366' }, // Couleur verte de WhatsApp
+                  }}
+                >
+                  <FaWhatsapp />
+                </IconButton>
+                <Typography 
+                  variant="body2" 
+                  component="a"
+                  href="https://wa.me/your-number"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    textDecoration: 'none',
+                    '&:hover': { color: '#25D366' },
+                  }}
+                >
+                  Discutez avec nous sur WhatsApp
+                </Typography>
               </Stack>
             </Grid>
           </Grid>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
   FaArrowLeft, 
@@ -13,9 +13,6 @@ import {
   FaPlay, 
   FaChevronLeft, 
   FaChevronRight, 
-  FaPlus, 
-  FaMinus, 
-  FaShoppingCart,
   FaGlobe,
   FaParking,
   FaInfoCircle,
@@ -24,17 +21,21 @@ import {
   FaUtensils,
   FaTwitter,
   FaInstagram,
-  FaLinkedin
+  FaLinkedin,
+  FaWhatsapp
 } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import { useAuth } from '../context/AuthContext';
+import { getFestivalsFromAirtable } from '../services/airtableService';
 import { 
   Box, 
   Container, 
   Grid, 
   Typography, 
   Stack, 
-  IconButton 
+  IconButton,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import {
   Event as EventIcon,
@@ -44,6 +45,7 @@ import {
   Home as HomeIcon,
 } from '@mui/icons-material';
 import { styled } from '@mui/material/styles';
+import ReservationForm from './ReservationForm';
 import './EvenementDetail.css';
 
 // Navbar flottante glassmorphism
@@ -164,10 +166,33 @@ const EvenementDetail = () => {
   const [isInterested, setIsInterested] = useState(false);
   const [interestedCount, setInterestedCount] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [reservation, setReservation] = useState({
-    nombrePersonnes: 1,
-    passes: {}
-  });
+
+  const [festivalsFromAirtable, setFestivalsFromAirtable] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Récupérer les données depuis Airtable
+  useEffect(() => {
+    const loadFestivalsFromAirtable = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        console.log('🔄 Récupération des festivals depuis Airtable...');
+        
+        const airtableData = await getFestivalsFromAirtable();
+        setFestivalsFromAirtable(airtableData);
+        
+        console.log('✅ Festivals récupérés:', airtableData.length);
+      } catch (error) {
+        console.error('❌ Erreur lors de la récupération des festivals:', error);
+        setError('Impossible de récupérer les données des festivals depuis Airtable');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFestivalsFromAirtable();
+  }, []);
 
   const navigationItems = [
     { icon: <HomeIcon />, text: 'HOME', href: '/' },
@@ -181,232 +206,68 @@ const EvenementDetail = () => {
     },
   ];
 
-  const festivals = useMemo(() => [
-    {
-      id: 1,
-      nom: "Les Nuits Secrètes",
-      lieu: "Aulnoye-Aymeries, France",
-      date: "Du ven 11 juil. à 15:00 / Au dim 13 juil. à 23:59",
+  // Adapter les données d'Airtable pour l'affichage
+  const festivals = useMemo(() => {
+    return festivalsFromAirtable.map(event => ({
+      id: event.id,
+      nom: event.nom,
+      lieu: `${event.ville}, ${event.pays}`,
+      date: event.dates || `${event.dateDebut} - ${event.dateFin}`,
       annee: "2025",
       media: [
         {
-          type: "video",
-          src: "https://www.youtube.com/embed/dQw4w9WgXcQ",
-          thumbnail: "/fete_bg.png",
-          title: "Aftermovie Les Nuits Secrètes 2024"
-        },
-        {
           type: "image",
-          src: "/fete_bg.png",
-          title: "Scène principale"
+          src: event.image || "/fete_bg.png",
+          title: `${event.nom} - Image principale`
         },
-        {
+        ...event.medias.map((media, index) => ({
           type: "image",
-          src: "/wallpaper.png",
-          title: "Ambiance festival"
-        },
-        {
-          type: "image",
-          src: "/background_image.png",
-          title: "Vue aérienne"
-        }
+          src: media,
+          title: `${event.nom} - Image ${index + 1}`
+        }))
       ],
-      capacite: "25000",
-      genres: ["Électro", "Techno", "House"],
-      prix: "89€",
-      description: "Un festival unique dans un cadre magique au cœur de la Thiérache. Les Nuits Secrètes propose une programmation éclectique mêlant électro, rock et découvertes dans un environnement préservé et authentique.",
+      capacite: event.capacite?.toString() || "0",
+      genres: [event.genre],
+             prix: event.prix && event.prix[0] ? `${event.prix[0]}€` : "Prix à déterminer",
+      description: event.description || `Découvrez le festival ${event.nom} à ${event.ville}, ${event.pays}. Un événement unique dans le genre ${event.genre}.`,
       billets: [
-        // Passes Festival
+        // Passes Festival basiques
         {
-          id: "pass3j",
-          nom: "Pass 3 jours",
-          prix: 89,
+          id: "pass_standard",
+          nom: "Pass Standard",
+          prix: event.prix?.[0] || 99,
           type: "pass",
-          description: "Accès complet aux 3 jours du festival avec camping inclus",
+          description: `Accès complet au festival ${event.nom}`,
           icon: <FaTicketAlt />
         },
         {
-          id: "pass1j",
-          nom: "Pass 1 jour",
-          prix: 35,
-          type: "pass",
-          description: "Accès pour une journée au choix",
-          icon: <FaTicketAlt />
-        },
-        {
-          id: "passvip",
+          id: "pass_vip",
           nom: "Pass VIP",
-          prix: 149,
+          prix: event.prix?.[1] || 149,
           type: "pass",
-          description: "Accès privilégié avec zone VIP et restauration",
+          description: "Accès privilégié avec zone VIP",
           icon: <FaTicketAlt />
         },
-        // Billets d'avion
         {
-          id: "vol_paris",
-          nom: "Vol Paris → Lille",
-          prix: 120,
-          type: "flight",
-          description: "Vol aller-retour depuis Paris CDG vers Lille",
-          icon: <FaPlane />
-        },
-        {
-          id: "vol_lyon",
-          nom: "Vol Lyon → Lille",
-          prix: 180,
-          type: "flight",
-          description: "Vol aller-retour depuis Lyon vers Lille",
-          icon: <FaPlane />
-        },
-        {
-          id: "vol_marseille",
-          nom: "Vol Marseille → Lille",
-          prix: 200,
-          type: "flight",
-          description: "Vol aller-retour depuis Marseille vers Lille",
-          icon: <FaPlane />
-        },
-        // Packages complets
-        {
-          id: "package_complet",
-          nom: "Package Festival + Vol",
-          prix: 299,
-          type: "package",
-          description: "Pass 3 jours + Vol Paris + Transferts inclus",
-          icon: <FaGlobe />
+          id: "pass_premium",
+          nom: "Pass Premium",
+          prix: event.prix?.[2] || 199,
+          type: "pass",
+          description: "Accès premium avec tous les avantages",
+          icon: <FaTicketAlt />
         }
       ],
-      lineup: [
-        { nom: "Disclosure", photo: "/logo192.png" },
-        { nom: "Moderat", photo: "/logo192.png" },
-        { nom: "Bicep", photo: "/logo192.png" },
-        { nom: "Bonobo", photo: "/logo192.png" },
-        { nom: "Caribou", photo: "/logo192.png" },
-        { nom: "Flume", photo: "/logo192.png" }
-      ]
-    },
-    {
-      id: 2,
-      nom: "Tomorrowland",
-      lieu: "Boom, Belgium",
-      date: "Du ven 18 juil. à 14:00 / Au dim 27 juil. à 23:59",
-      annee: "2025",
-      media: [
-        {
-          type: "video",
-          src: "https://www.youtube.com/embed/UWLIgjB9gGw",
-          thumbnail: "/fete_bg.png",
-          title: "Tomorrowland 2024 Official Aftermovie"
-        },
-        {
-          type: "image",
-          src: "/fete_bg.png",
-          title: "Mainstage Tomorrowland"
-        },
-        {
-          type: "image",
-          src: "/wallpaper.png",
-          title: "Dreamville Camping"
-        },
-        {
-          type: "image",
-          src: "/background_image.png",
-          title: "Festival grounds"
-        }
+      lineup: event.lineup || [
+        { nom: "Artiste 1", photo: "/logo192.png" },
+        { nom: "Artiste 2", photo: "/logo192.png" },
+        { nom: "Artiste 3", photo: "/logo192.png" }
       ],
-      capacite: "400000",
-      genres: ["EDM", "House", "Trance"],
-      prix: "350€",
-      description: "Le plus grand festival de musique électronique au monde. Tomorrowland vous transporte dans un monde fantastique avec les plus grands DJs de la planète.",
-      billets: [
-        // Passes Festival
-        {
-          id: "weekend1",
-          nom: "Weekend 1",
-          prix: 350,
-          type: "pass",
-          description: "Accès complet au premier weekend",
-          icon: <FaTicketAlt />
-        },
-        {
-          id: "weekend2",
-          nom: "Weekend 2",
-          prix: 350,
-          type: "pass",
-          description: "Accès complet au deuxième weekend",
-          icon: <FaTicketAlt />
-        },
-        {
-          id: "fullmadness",
-          nom: "Full Madness",
-          prix: 650,
-          type: "pass",
-          description: "Accès aux deux weekends complets",
-          icon: <FaTicketAlt />
-        },
-        // Billets d'avion
-        {
-          id: "vol_paris_bxl",
-          nom: "Vol Paris → Bruxelles",
-          prix: 150,
-          type: "flight",
-          description: "Vol aller-retour depuis Paris vers Bruxelles",
-          icon: <FaPlane />
-        },
-        {
-          id: "vol_lyon_bxl",
-          nom: "Vol Lyon → Bruxelles",
-          prix: 220,
-          type: "flight",
-          description: "Vol aller-retour depuis Lyon vers Bruxelles",
-          icon: <FaPlane />
-        },
-        {
-          id: "vol_madrid_bxl",
-          nom: "Vol Madrid → Bruxelles",
-          prix: 180,
-          type: "flight",
-          description: "Vol aller-retour depuis Madrid vers Bruxelles",
-          icon: <FaPlane />
-        },
-        {
-          id: "vol_london_bxl",
-          nom: "Vol Londres → Bruxelles",
-          prix: 160,
-          type: "flight",
-          description: "Vol aller-retour depuis Londres vers Bruxelles",
-          icon: <FaPlane />
-        },
-        // Packages complets
-        {
-          id: "dreamville_package",
-          nom: "Package Dreamville",
-          prix: 899,
-          type: "package",
-          description: "Weekend 1 + Vol Paris + Camping Dreamville + Repas",
-          icon: <FaGlobe />
-        },
-        {
-          id: "premium_package",
-          nom: "Package Premium",
-          prix: 1299,
-          type: "package",
-          description: "Full Madness + Vol + Hôtel 4* + Transferts VIP",
-          icon: <FaGlobe />
-        }
-      ],
-      lineup: [
-        { nom: "Martin Garrix", photo: "/logo192.png" },
-        { nom: "Armin van Buuren", photo: "/logo192.png" },
-        { nom: "Tiësto", photo: "/logo192.png" },
-        { nom: "David Guetta", photo: "/logo192.png" },
-        { nom: "Hardwell", photo: "/logo192.png" },
-        { nom: "Afrojack", photo: "/logo192.png" }
-      ]
-    }
-  ], []);
+      // Passer toutes les données brutes pour le formulaire
+      rawAirtableData: event
+    }));
+  }, [festivalsFromAirtable]);
 
-  const festival = festivals.find(f => f.id === parseInt(id)) || festivals[0];
+  const festival = festivals.find(f => f.id === id) || (festivals.length > 0 ? festivals[0] : null);
 
   const handleInterest = () => {
     setIsInterested(!isInterested);
@@ -414,68 +275,121 @@ const EvenementDetail = () => {
   };
 
   const nextSlide = () => {
+    if (festival && festival.media && festival.media.length > 0) {
     setCurrentSlide((prev) => (prev + 1) % festival.media.length);
+    }
   };
 
   const prevSlide = () => {
+    if (festival && festival.media && festival.media.length > 0) {
     setCurrentSlide((prev) => (prev - 1 + festival.media.length) % festival.media.length);
-  };
-
-  const handleQuantityChange = (ticketId, change) => {
-    setReservation(prev => ({
-      ...prev,
-      passes: {
-        ...prev.passes,
-        [ticketId]: Math.max(0, (prev.passes[ticketId] || 0) + change)
-      }
-    }));
-  };
-
-  const getTotalPasses = () => {
-    return Object.values(reservation.passes).reduce((total, quantity) => total + quantity, 0);
-  };
-
-  const getTotalPrice = () => {
-    return Object.entries(reservation.passes).reduce((total, [ticketId, quantity]) => {
-      const ticket = festival.billets.find(b => b.id === ticketId);
-      return total + (ticket ? ticket.prix * quantity : 0);
-    }, 0);
-  };
-
-  // Grouper les billets par type
-  const groupedTickets = useMemo(() => {
-    const grouped = {
-      pass: [],
-      flight: [],
-      package: []
-    };
-    
-    festival.billets.forEach(ticket => {
-      if (grouped[ticket.type]) {
-        grouped[ticket.type].push(ticket);
-      }
-    });
-    
-    return grouped;
-  }, [festival.billets]);
-
-  const getTicketTypeLabel = (type) => {
-    switch(type) {
-      case 'pass': return 'Passes Festival';
-      case 'flight': return 'Billets d\'Avion';
-      case 'package': return 'Packages Complets';
-      default: return 'Autres';
     }
   };
 
-  const getTicketTypeIcon = (type) => {
-    switch(type) {
-      case 'pass': return <FaTicketAlt />;
-      case 'flight': return <FaPlane />;
-      case 'package': return <FaGlobe />;
-      default: return <FaTicketAlt />;
-    }
-  };
+
+
+  // Afficher un loader pendant le chargement
+  if (loading) {
+    return (
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundImage: `url(${process.env.PUBLIC_URL}/bg.png)`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          gap: 2
+        }}
+      >
+        <CircularProgress size={60} sx={{ color: '#fc6c34' }} />
+        <Typography variant="h6" sx={{ color: 'white' }}>
+          Chargement des détails du festival depuis Airtable...
+        </Typography>
+      </Box>
+    );
+  }
+
+  // Afficher une erreur si les données n'ont pas pu être chargées
+  if (error) {
+    return (
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundImage: `url(${process.env.PUBLIC_URL}/bg.png)`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          gap: 2
+        }}
+      >
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Link to="/evenements" className="back-button">
+          <FaArrowLeft /> Retour aux événements
+        </Link>
+      </Box>
+    );
+  }
+
+  // Afficher un message si aucun festival n'est trouvé
+  if (!loading && (!festival || !festival.nom)) {
+    return (
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundImage: `url(${process.env.PUBLIC_URL}/bg.png)`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          gap: 2
+        }}
+      >
+        <Typography variant="h6" sx={{ color: 'white' }}>
+          Festival non trouvé
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          ID recherché: {id}
+        </Typography>
+        <Link to="/evenements" className="back-button">
+          <FaArrowLeft /> Retour aux événements
+        </Link>
+      </Box>
+    );
+  }
+
+  // Afficher un loader si les données ne sont pas encore prêtes
+  if (loading || !festival) {
+    return (
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundImage: `url(${process.env.PUBLIC_URL}/bg.png)`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          gap: 2
+        }}
+      >
+        <CircularProgress size={60} sx={{ color: '#fc6c34' }} />
+        <Typography variant="h6" sx={{ color: 'white' }}>
+          Chargement des détails du festival...
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box 
@@ -622,70 +536,12 @@ const EvenementDetail = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Colonne de droite - Réservation */}
-          <div className="booking-column">
-            <div className="booking-card">
-              <h2><FaShoppingCart /> Réservation</h2>
-              
-              {/* Affichage des billets par catégorie */}
-              {Object.entries(groupedTickets).map(([type, tickets]) => (
-                tickets.length > 0 && (
-                  <div key={type} className="ticket-category">
-                    <h3 className="category-title">
-                      {getTicketTypeIcon(type)}
-                      {getTicketTypeLabel(type)}
-                    </h3>
-                    
-                    {tickets.map((ticket) => (
-                      <div key={ticket.id} className={`ticket-option ${ticket.type}`}>
-                        <div className="ticket-info">
-                          <div className="ticket-header">
-                            <span className="ticket-icon">{ticket.icon}</span>
-                            <div className="ticket-name">{ticket.nom}</div>
-                          </div>
-                          <div className="ticket-description">{ticket.description}</div>
-                          <div className="ticket-price">{ticket.prix}€</div>
-                        </div>
-                        <div className="ticket-controls">
-                          <button 
-                            className="qty-btn"
-                            onClick={() => handleQuantityChange(ticket.id, -1)}
-                            disabled={!reservation.passes[ticket.id]}
-                          >
-                            <FaMinus />
-                          </button>
-                          <span className="quantity">{reservation.passes[ticket.id] || 0}</span>
-                          <button 
-                            className="qty-btn"
-                            onClick={() => handleQuantityChange(ticket.id, 1)}
-                          >
-                            <FaPlus />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )
-              ))}
-
-              {/* Résumé de la commande */}
-              {getTotalPasses() > 0 && (
-                <div className="order-summary">
-                  <div className="summary-line">
-                    <span>Total articles: {getTotalPasses()}</span>
-                  </div>
-                  <div className="summary-line total">
-                    <span>Total: {getTotalPrice()}€</span>
-                  </div>
-                  <button className="book-btn">
-                    <FaShoppingCart />
-                    Demander un devis
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+        {/* Section de réservation en bas */}
+        <div className="reservation-section">
+          <h2><FaTicketAlt /> Réserver votre place</h2>
+          <ReservationForm festival={festival ? festival.rawAirtableData : null} />
         </div>
       </div>
 
@@ -765,7 +621,7 @@ const EvenementDetail = () => {
               <Typography variant="h6" gutterBottom>
                 Suivez-nous
               </Typography>
-              <Stack direction="row" spacing={1}>
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
                 {[FaTwitter, FaInstagram, FaLinkedin, SiTiktok].map((Icon, index) => (
                   <IconButton
                     key={index}
@@ -778,6 +634,35 @@ const EvenementDetail = () => {
                     <Icon />
                   </IconButton>
                 ))}
+              </Stack>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+                <IconButton
+                  component="a"
+                  href="https://wa.me/your-number"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    '&:hover': { backgroundColor: '#25D366' }, // Couleur verte de WhatsApp
+                  }}
+                >
+                  <FaWhatsapp />
+                </IconButton>
+                <Typography 
+                  variant="body2" 
+                  component="a"
+                  href="https://wa.me/your-number"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{ 
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    textDecoration: 'none',
+                    '&:hover': { color: '#25D366' },
+                  }}
+                >
+                  Discutez avec nous sur WhatsApp
+                </Typography>
               </Stack>
             </Grid>
           </Grid>

@@ -209,10 +209,34 @@
 
 .typing-indicator span:nth-child(2) {
   animation-delay: 0.2s;
+  }
+  
+  .typing-indicator span:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+
+/* Styles pour les cartes de festivals */
+.festivals-cards-container {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.typing-indicator span:nth-child(3) {
-  animation-delay: 0.4s;
+.festivals-cards-container > div {
+  margin: 0 !important;
+}
+
+/* Responsive pour les cartes */
+@media (max-width: 768px) {
+  .festivals-cards-container {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 @keyframes typing {

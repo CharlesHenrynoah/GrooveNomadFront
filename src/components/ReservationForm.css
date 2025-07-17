@@ -1,0 +1,551 @@
+/* Variables globales modernisées */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  --glass-blur: blur(30px);
+  --primary-orange: #fc6c34;
+  --primary-orange-dark: #e55a29;
+  --text-white: #ffffff;
+  --text-white-secondary: rgba(255, 255, 255, 0.8);
+  --text-white-muted: rgba(255, 255, 255, 0.6);
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --border-radius-sm: 12px;
+  --border-radius-md: 16px;
+  --border-radius-lg: 24px;
+  --border-radius-xl: 32px;
+}
+
+/* Reset et base */
+* {
+  box-sizing: border-box;
+}
+
+/* Container principal du formulaire */
+.reservation-form-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--border-radius-xl) !important;
+  padding: var(--spacing-xl) !important;
+  margin: var(--spacing-lg) auto !important;
+  max-width: 1000px !important;
+  box-shadow: var(--glass-shadow) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.reservation-form-card:hover {
+  background: var(--glass-bg-hover) !important;
+  border-color: var(--glass-border-hover) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Titre principal */
+.reservation-form-card .MuiTypography-h4 {
+  color: var(--text-white) !important;
+  font-weight: 700 !important;
+  font-size: 2.5rem !important;
+  margin-bottom: var(--spacing-xl) !important;
+  text-align: center !important;
+  letter-spacing: -0.02em !important;
+  background: linear-gradient(135deg, #ffffff, rgba(255, 255, 255, 0.8)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Style des accordéons modernisés */
+.reservation-accordion {
+  background: transparent !important;
+  border: none !important;
+  border-radius: var(--border-radius-md) !important;
+  margin-bottom: var(--spacing-md) !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.reservation-accordion:before {
+  display: none !important;
+}
+
+.reservation-accordion.Mui-expanded {
+  margin: var(--spacing-md) 0 !important;
+}
+
+/* En-tête d'accordéon */
+.reservation-accordion .MuiAccordionSummary-root {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--border-radius-md) !important;
+  min-height: 72px !important;
+  padding: 0 var(--spacing-md) !important;
+  transition: all 0.3s ease !important;
+}
+
+.reservation-accordion .MuiAccordionSummary-root:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--glass-border-hover) !important;
+}
+
+.reservation-accordion .MuiAccordionSummary-root.Mui-expanded {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+/* Titres d'accordéon */
+.reservation-accordion .MuiAccordionSummary-root .MuiTypography-h6 {
+  color: var(--text-white) !important;
+  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Icône d'expansion */
+.reservation-accordion .MuiAccordionSummary-expandIconWrapper {
+  color: var(--text-white-secondary) !important;
+  transition: all 0.3s ease !important;
+}
+
+.reservation-accordion .MuiAccordionSummary-expandIconWrapper.Mui-expanded {
+  transform: rotate(180deg) !important;
+  color: var(--primary-orange) !important;
+}
+
+/* Contenu d'accordéon */
+.reservation-accordion .MuiAccordionDetails-root {
+  padding: var(--spacing-lg) !important;
+  background: rgba(255, 255, 255, 0.01) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-top: none !important;
+  border-bottom-left-radius: var(--border-radius-md) !important;
+  border-bottom-right-radius: var(--border-radius-md) !important;
+}
+
+/* Alertes */
+.reservation-accordion .MuiAlert-root {
+  border-radius: var(--border-radius-sm) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.reservation-accordion .MuiAlert-standardInfo {
+  background: rgba(3, 169, 244, 0.1) !important;
+  border-color: rgba(3, 169, 244, 0.2) !important;
+}
+
+.reservation-accordion .MuiAlert-standardWarning {
+  background: rgba(255, 152, 0, 0.1) !important;
+  border-color: rgba(255, 152, 0, 0.2) !important;
+}
+
+/* Champs de texte modernisés */
+.reservation-accordion .MuiTextField-root {
+  margin-bottom: var(--spacing-md) !important;
+}
+
+.reservation-accordion .MuiTextField-root .MuiOutlinedInput-root {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: var(--border-radius-sm) !important;
+  border: 1px solid var(--glass-border) !important;
+  transition: all 0.3s ease !important;
+}
+
+.reservation-accordion .MuiTextField-root .MuiOutlinedInput-root:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: var(--glass-border-hover) !important;
+}
+
+.reservation-accordion .MuiTextField-root .MuiOutlinedInput-root.Mui-focused {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: var(--primary-orange) !important;
+  box-shadow: 0 0 0 2px rgba(252, 108, 52, 0.1) !important;
+}
+
+.reservation-accordion .MuiTextField-root .MuiInputLabel-root {
+  color: var(--text-white-secondary) !important;
+  font-weight: 500 !important;
+}
+
+.reservation-accordion .MuiTextField-root .MuiOutlinedInput-input {
+  color: var(--text-white) !important;
+  font-weight: 500 !important;
+}
+
+.reservation-accordion .MuiTextField-root .MuiOutlinedInput-input::placeholder {
+  color: var(--text-white-muted) !important;
+}
+
+/* Champs désactivés */
+.reservation-accordion .MuiTextField-root .Mui-disabled {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: var(--glass-border) !important;
+}
+
+.reservation-accordion .MuiTextField-root .Mui-disabled .MuiOutlinedInput-input {
+  color: var(--text-white-muted) !important;
+  -webkit-text-fill-color: var(--text-white-muted) !important;
+}
+
+/* Cartes d'options modernisées */
+.option-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--border-radius-md) !important;
+  padding: var(--spacing-lg) !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.option-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background: linear-gradient(135deg, rgba(252, 108, 52, 0.05), rgba(252, 108, 52, 0.02)) !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+  pointer-events: none !important;
+}
+
+.option-card:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--primary-orange) !important;
+  transform: translateY(-6px) !important;
+  box-shadow: 0 20px 40px rgba(252, 108, 52, 0.1) !important;
+}
+
+.option-card:hover::before {
+  opacity: 1 !important;
+}
+
+.option-card.selected {
+  border: 2px solid var(--primary-orange) !important;
+  background: rgba(252, 108, 52, 0.05) !important;
+  box-shadow: 0 0 30px rgba(252, 108, 52, 0.2) !important;
+  transform: translateY(-4px) !important;
+}
+
+.option-card.selected::before {
+  opacity: 1 !important;
+}
+
+/* Titres des cartes */
+.option-card .MuiTypography-h6 {
+  color: var(--text-white) !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  margin-bottom: var(--spacing-sm) !important;
+}
+
+.option-card .MuiTypography-body1 {
+  color: var(--text-white-secondary) !important;
+  font-weight: 500 !important;
+  line-height: 1.6 !important;
+}
+
+.option-card .MuiTypography-body2 {
+  color: var(--text-white-muted) !important;
+  font-size: 0.9rem !important;
+}
+
+/* Prix dans les cartes */
+.option-card .MuiTypography-h5 {
+  color: var(--primary-orange) !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+  margin: var(--spacing-sm) 0 !important;
+}
+
+/* Boutons dans les cartes */
+.option-card .MuiButton-root {
+  border-radius: var(--border-radius-sm) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  padding: 8px 16px !important;
+  transition: all 0.3s ease !important;
+}
+
+.option-card .MuiButton-outlined {
+  border-color: var(--glass-border-hover) !important;
+  color: var(--text-white-secondary) !important;
+}
+
+.option-card .MuiButton-outlined:hover {
+  border-color: var(--primary-orange) !important;
+  background: rgba(252, 108, 52, 0.1) !important;
+  color: var(--primary-orange) !important;
+}
+
+.option-card .MuiButton-contained {
+  background: var(--primary-orange) !important;
+  color: white !important;
+}
+
+.option-card .MuiButton-contained:hover {
+  background: var(--primary-orange-dark) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 20px rgba(252, 108, 52, 0.3) !important;
+}
+
+/* Cartes de billets */
+.ticket-card {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--border-radius-md) !important;
+  padding: var(--spacing-lg) !important;
+  text-align: center !important;
+  transition: all 0.3s ease !important;
+  height: 100% !important;
+}
+
+.ticket-card:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: var(--glass-border-hover) !important;
+  transform: translateY(-4px) !important;
+}
+
+.ticket-card .MuiTypography-h6 {
+  color: var(--text-white) !important;
+  font-weight: 600 !important;
+  margin-bottom: var(--spacing-sm) !important;
+}
+
+.ticket-card .MuiTypography-body2 {
+  color: var(--text-white-secondary) !important;
+  margin-bottom: var(--spacing-sm) !important;
+}
+
+.ticket-card .MuiTypography-h5 {
+  color: var(--primary-orange) !important;
+  font-weight: 700 !important;
+  margin-bottom: var(--spacing-sm) !important;
+}
+
+/* Champs numériques pour les billets */
+.ticket-card .MuiTextField-root .MuiOutlinedInput-root {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-radius: var(--border-radius-sm) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.ticket-card .MuiTextField-root .MuiOutlinedInput-input {
+  color: var(--text-white) !important;
+  text-align: center !important;
+  font-weight: 600 !important;
+}
+
+/* Résumé du devis */
+.quote-summary-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--border-radius-lg) !important;
+  padding: var(--spacing-xl) !important;
+  margin-top: var(--spacing-xl) !important;
+  backdrop-filter: var(--glass-blur) !important;
+}
+
+.quote-summary-card .MuiTypography-h5 {
+  color: var(--primary-orange) !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+  margin-bottom: var(--spacing-lg) !important;
+  text-align: center !important;
+}
+
+.quote-summary-card .MuiTypography-body1 {
+  color: var(--text-white) !important;
+  font-weight: 600 !important;
+  margin-bottom: var(--spacing-sm) !important;
+}
+
+.quote-summary-card .MuiTypography-body2 {
+  color: var(--text-white-secondary) !important;
+  margin-bottom: var(--spacing-xs) !important;
+}
+
+.quote-summary-card .MuiDivider-root {
+  background: var(--glass-border) !important;
+  margin: var(--spacing-md) 0 !important;
+}
+
+/* Boutons d'action principaux */
+.action-buttons-container {
+  display: flex !important;
+  gap: var(--spacing-md) !important;
+  flex-wrap: wrap !important;
+  margin-top: var(--spacing-xl) !important;
+  justify-content: center !important;
+}
+
+.action-buttons-container .MuiButton-root {
+  border-radius: var(--border-radius-md) !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  padding: 12px 24px !important;
+  font-size: 1rem !important;
+  transition: all 0.3s ease !important;
+  min-width: 160px !important;
+}
+
+.action-buttons-container .MuiButton-contained {
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-dark)) !important;
+  color: white !important;
+  box-shadow: 0 4px 15px rgba(252, 108, 52, 0.3) !important;
+}
+
+.action-buttons-container .MuiButton-contained:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 8px 25px rgba(252, 108, 52, 0.4) !important;
+}
+
+.action-buttons-container .MuiButton-contained:disabled {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-white-muted) !important;
+  box-shadow: none !important;
+}
+
+.action-buttons-container .MuiButton-outlined {
+  border-color: var(--glass-border-hover) !important;
+  color: var(--text-white) !important;
+}
+
+.action-buttons-container .MuiButton-outlined:hover {
+  border-color: var(--primary-orange) !important;
+  background: rgba(252, 108, 52, 0.1) !important;
+  color: var(--primary-orange) !important;
+}
+
+/* Bouton de téléchargement PDF */
+.action-buttons-container .MuiButton-contained[style*="background-color: #27ae60"] {
+  background: linear-gradient(135deg, #27ae60, #229954) !important;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3) !important;
+}
+
+.action-buttons-container .MuiButton-contained[style*="background-color: #27ae60"]:hover {
+  box-shadow: 0 8px 25px rgba(39, 174, 96, 0.4) !important;
+}
+
+/* Icônes */
+.MuiSvgIcon-root {
+  color: var(--text-white-secondary) !important;
+}
+
+.MuiButton-root .MuiSvgIcon-root {
+  color: inherit !important;
+}
+
+/* Responsive design */
+@media (max-width: 960px) {
+  .reservation-form-card {
+    padding: var(--spacing-lg) !important;
+    margin: var(--spacing-md) auto !important;
+  }
+
+  .reservation-form-card .MuiTypography-h4 {
+    font-size: 2rem !important;
+  }
+
+  .option-card {
+    padding: var(--spacing-md) !important;
+  }
+
+  .action-buttons-container {
+    flex-direction: column !important;
+    align-items: center !important;
+  }
+
+  .action-buttons-container .MuiButton-root {
+    width: 100% !important;
+    max-width: 300px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .reservation-form-card {
+    padding: var(--spacing-md) !important;
+    border-radius: var(--border-radius-lg) !important;
+  }
+
+  .reservation-form-card .MuiTypography-h4 {
+    font-size: 1.75rem !important;
+  }
+
+  .reservation-accordion .MuiAccordionSummary-root {
+    padding: 0 var(--spacing-sm) !important;
+    min-height: 64px !important;
+  }
+
+  .reservation-accordion .MuiAccordionDetails-root {
+    padding: var(--spacing-md) !important;
+  }
+
+  .option-card {
+    padding: var(--spacing-sm) !important;
+  }
+
+  .quote-summary-card {
+    padding: var(--spacing-md) !important;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+  .reservation-form-card {
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.option-card {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation-delay: calc(var(--animation-order, 0) * 0.1s) !important;
+}
+
+/* Amélioration de l'accessibilité */
+.MuiButton-root:focus-visible,
+.MuiAccordionSummary-root:focus-visible,
+.option-card:focus-visible {
+  outline: 2px solid var(--primary-orange) !important;
+  outline-offset: 2px !important;
+}
+
+/* Scrollbar personnalisée */
+.reservation-form-card::-webkit-scrollbar {
+  width: 8px;
+}
+
+.reservation-form-card::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.reservation-form-card::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
+}
+
+.reservation-form-card::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-border-hover);
+} 

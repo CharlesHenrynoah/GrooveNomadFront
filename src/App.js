@@ -8,6 +8,7 @@ import MonCompte from './components/MonCompte';
 import Chatbot from './components/Chatbot';
 import Evenements from './components/Evenements';
 import EvenementDetail from './components/EvenementDetail';
+import AirtableTest from './components/AirtableTest';
 import { AuthProvider } from './context/AuthContext';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
             <Route path="/chatbot" element={<Chatbot />} />
             <Route path="/evenements" element={<Evenements />} />
             <Route path="/evenements/:id" element={<EvenementDetail />} />
+            <Route path="/test-airtable" element={<AirtableTest />} />
           </Routes>
         </Router>
       </AuthProvider>
