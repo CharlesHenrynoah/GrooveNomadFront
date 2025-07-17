@@ -25,7 +25,6 @@ const cleanArtistName = (name) => {
   
   // Diviser le nom en mots
   const words = name.split(' ');
-  const cleanedWords = [];
   
   // Détecter si le nom est dupliqué (ex: "Martin GarrixMartin Garrix")
   const halfLength = Math.floor(words.length / 2);
@@ -359,4 +358,139 @@ const parseAccommodationOptions = (accommodationString) => {
   return mappedOptions;
 };
 
-export default { getFestivalsFromAirtable }; 
+// Fonction pour envoyer un devis à Airtable
+export const sendDevisToAirtable = async (devisData) => {
+  try {
+    console.log('📋 Envoi du devis à Airtable...', devisData);
+    
+    // Générer un ID unique pour le devis
+    const devisId = `GROOVE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Créer le lien de paiement unique avec les données encodées
+    const paymentDataForUrl = {
+      devisid: devisId,
+      invoicenumber: devisId,
+      amount: devisData.total_ttc.toFixed(2),
+      festivalname: devisData.festival_nom || 'Festival',
+      clientname: `${devisData.client_nom} ${devisData.client_prenom}`,
+      clientemail: devisData.client_email,
+      // Ajouter toutes les données du devis pour une utilisation complète
+      devisdata: devisData
+    };
+    
+    console.log('🎫 Nom du festival dans les données:', devisData.festival_nom);
+    console.log('🎫 Nom du festival assigné:', paymentDataForUrl.festivalName);
+    
+    // Encoder les données dans l'URL avec gestion des caractères spéciaux
+    const jsonString = JSON.stringify(paymentDataForUrl);
+    console.log('📋 JSON string avant encodage:', jsonString);
+    
+    // Utiliser une approche plus simple avec encodeURIComponent
+    const encodedData = encodeURIComponent(jsonString);
+    const paymentLink = `${window.location.origin}/payment/${devisId}?data=${encodedData}`;
+    
+    console.log('🔗 Données encodées dans l\'URL:', paymentDataForUrl);
+    console.log('📝 URL complète du lien de paiement:', paymentLink);
+    
+    // Préparer les données pour Airtable selon la structure du CSV
+    const airtableData = {};
+    
+    // Champs texte - toujours inclus même si vides
+    airtableData['Nom Prénom Réservant'] = `${devisData.client_nom || ''} ${devisData.client_prenom || ''}`.trim() || 'Non spécifié';
+    airtableData['Email'] = devisData.client_email || 'Non spécifié';
+    
+    // Champs numériques - seulement si la valeur est > 0
+    if (devisData.ticket_basic_quantity > 0) {
+      airtableData['Nombre de Tickets Basic'] = Number(devisData.ticket_basic_quantity);
+      airtableData['Prix Total Tickets Basic'] = Number(devisData.ticket_basic_prix_total);
+    }
+    
+    if (devisData.ticket_premier_quantity > 0) {
+      airtableData['Nombre de Tickets Premier'] = Number(devisData.ticket_premier_quantity);
+      airtableData['Prix Total Tickets Premier'] = Number(devisData.ticket_premier_prix_total);
+    }
+    
+    if (devisData.ticket_vip_quantity > 0) {
+      airtableData['Nombre de Tickets VIP'] = Number(devisData.ticket_vip_quantity);
+      airtableData['Prix Total Tickets VIP'] = Number(devisData.ticket_vip_prix_total);
+    }
+    
+    if (devisData.cout_hebergement > 0) {
+      airtableData['Coût Total Hébergement'] = Number(devisData.cout_hebergement);
+    }
+    
+    if (devisData.flight_quantity > 0) {
+      airtableData['Nombre Billets de Vol'] = Number(devisData.flight_quantity);
+      airtableData['Coût Total Billets de Vol'] = Number(devisData.cout_vols);
+    }
+    
+    // Totaux - toujours inclus même si 0
+    if (devisData.sous_total > 0) {
+      airtableData['Sous-Total'] = Number(devisData.sous_total);
+    }
+    
+    if (devisData.commission_groovenomad > 0) {
+      airtableData['Total Commission'] = Number(devisData.commission_groovenomad);
+    }
+    
+    if (devisData.total_ttc > 0) {
+      airtableData['Total'] = Number(devisData.total_ttc);
+    }
+    
+    // Ajouter le lien de paiement
+    airtableData['Page de paiement'] = paymentLink;
+
+    console.log('📊 Données formatées pour Airtable:', airtableData);
+    console.log('🔗 Lien de paiement généré:', paymentLink);
+
+    // Envoyer à la table "Demande_de_devis"
+    const record = await base('Demande_de_devis').create([
+      {
+        fields: airtableData
+      }
+    ]);
+
+    console.log('✅ Devis envoyé avec succès à Airtable:', record[0].id);
+    
+    // Stocker les données du devis dans localStorage pour la page de paiement
+    const paymentData = {
+      devisid: devisId,
+      invoicenumber: devisId,
+      amount: devisData.total_ttc.toFixed(2),
+      festivalname: devisData.festival_nom || 'Festival',
+      clientname: `${devisData.client_nom} ${devisData.client_prenom}`,
+      clientemail: devisData.client_email,
+      devisdata: devisData
+    };
+    
+    console.log('💾 Stockage des données de paiement:', {
+      key: `payment_${devisId}`,
+      data: paymentData
+    });
+    
+    localStorage.setItem(`payment_${devisId}`, JSON.stringify(paymentData));
+    
+    // Vérifier que les données ont été stockées
+    const storedData = localStorage.getItem(`payment_${devisId}`);
+    console.log('✅ Vérification du stockage:', storedData ? 'Données stockées avec succès' : 'Erreur de stockage');
+
+    return {
+      success: true,
+      recordId: record[0].id,
+      paymentLink: paymentLink,
+      devisId: devisId,
+      message: 'Devis envoyé avec succès'
+    };
+
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'envoi du devis à Airtable:', error);
+    return {
+      success: false,
+      error: error.message,
+      message: 'Erreur lors de l\'envoi du devis'
+    };
+  }
+};
+
+const airtableService = { getFestivalsFromAirtable };
+export default airtableService; 

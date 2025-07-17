@@ -1,0 +1,135 @@
+.payment-success-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fc6c34 0%, #e55a29 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.success-card {
+  max-width: 500px;
+  width: 100%;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px rgba(252, 108, 52, 0.2) !important;
+  background: white !important;
+  border: 1px solid rgba(252, 108, 52, 0.1);
+}
+
+.success-content {
+  text-align: center;
+  padding: 40px !important;
+}
+
+.success-icon {
+  margin-bottom: 24px;
+}
+
+.success-icon .MuiSvgIcon-root {
+  font-size: 4rem !important;
+  color: #fc6c34;
+}
+
+.success-title {
+  color: #2c2c2c !important;
+  font-weight: 700 !important;
+  margin-bottom: 16px !important;
+}
+
+.success-message {
+  color: #666 !important;
+  margin-bottom: 32px !important;
+  line-height: 1.6 !important;
+}
+
+.transaction-details {
+  margin-bottom: 32px;
+}
+
+.transaction-chip {
+  background: #f0f0f0 !important;
+  color: #666 !important;
+  font-size: 0.8rem !important;
+  margin-bottom: 16px !important;
+}
+
+.amount-paid {
+  color: #fc6c34 !important;
+  font-weight: 700 !important;
+  font-size: 2rem !important;
+}
+
+.confirmation-info {
+  color: #666 !important;
+  margin-bottom: 32px !important;
+  line-height: 1.6 !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.download-button {
+  border-color: #fc6c34 !important;
+  color: #fc6c34 !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+}
+
+.download-button:hover {
+  background: rgba(252, 108, 52, 0.1) !important;
+  border-color: #e55a29 !important;
+  color: #e55a29 !important;
+}
+
+.home-button {
+  background: #fc6c34 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 8px rgba(252, 108, 52, 0.3) !important;
+}
+
+.home-button:hover {
+  background: #e55a29 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(252, 108, 52, 0.4) !important;
+}
+
+.redirect-info {
+  color: #999 !important;
+  font-size: 0.8rem !important;
+}
+
+@media (max-width: 600px) {
+  .success-content {
+    padding: 30px 20px !important;
+  }
+  
+  .success-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .amount-paid {
+    font-size: 1.5rem !important;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .download-button,
+  .home-button {
+    width: 100%;
+    max-width: 200px;
+  }
+} 

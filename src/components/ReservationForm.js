@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { sendDevisToAirtable } from '../services/airtableService';
 import { 
   Box, 
   Card, 
@@ -53,11 +55,13 @@ import {
   FaSwimmingPool,
   FaDownload
 } from 'react-icons/fa';
+import { Payment } from '@mui/icons-material';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import './ReservationForm.css';
 
 const ReservationForm = ({ festival }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [selectedGroupSize, setSelectedGroupSize] = useState('');
   const [selectedAccommodation, setSelectedAccommodation] = useState('');
@@ -76,6 +80,9 @@ const ReservationForm = ({ festival }) => {
     email: user?.email || '',
     telephone: ''
   });
+  const [isSendingToAirtable, setIsSendingToAirtable] = useState(false);
+  const [airtableStatus, setAirtableStatus] = useState(null);
+  const [paymentLink, setPaymentLink] = useState(null);
 
   // Mettre à jour les informations client quand l'utilisateur change
   useEffect(() => {
@@ -221,7 +228,7 @@ const ReservationForm = ({ festival }) => {
   };
 
   // Générer le devis
-  const generateQuote = () => {
+  const generateQuote = async () => {
     const totalTickets = Object.values(ticketQuantities).reduce((sum, qty) => sum + qty, 0);
 
     if (!selectedGroupSize || !selectedAccommodation || totalTickets === 0) {
@@ -273,6 +280,80 @@ const ReservationForm = ({ festival }) => {
 
     setQuote(newQuote);
     setShowQuoteResult(true);
+
+    // Envoyer automatiquement le devis à Airtable
+    setIsSendingToAirtable(true);
+    setAirtableStatus(null);
+    
+    try {
+      // Structure des données optimisée pour Airtable
+      console.log('🎫 Festival object:', festival);
+      console.log('🎫 Festival.nom:', festival?.nom);
+      
+      const devisData = {
+        // Informations client
+        client_nom: clientInfo.nom || '',
+        client_prenom: clientInfo.prenom || '',
+        client_email: clientInfo.email || '',
+        client_telephone: clientInfo.telephone || '',
+        
+        // Informations festival
+        festival_nom: festival?.nom || 'Festival',
+        type_groupe: selectedGroupSize || '',
+        
+        // Billets de festival
+        ticket_basic_quantity: parseInt(ticketQuantities.basic) || 0,
+        ticket_basic_prix_unitaire: parseFloat(ticketPrices.basic) || 0,
+        ticket_basic_prix_total: (parseInt(ticketQuantities.basic) || 0) * (parseFloat(ticketPrices.basic) || 0),
+        
+        ticket_premier_quantity: parseInt(ticketQuantities.premier) || 0,
+        ticket_premier_prix_unitaire: parseFloat(ticketPrices.premier) || 0,
+        ticket_premier_prix_total: (parseInt(ticketQuantities.premier) || 0) * (parseFloat(ticketPrices.premier) || 0),
+        
+        ticket_vip_quantity: parseInt(ticketQuantities.vip) || 0,
+        ticket_vip_prix_unitaire: parseFloat(ticketPrices.vip) || 0,
+        ticket_vip_prix_total: (parseInt(ticketQuantities.vip) || 0) * (parseFloat(ticketPrices.vip) || 0),
+        
+        // Hébergement
+        hebergement_nom: selectedAccommodationData?.name || '',
+        cout_hebergement: parseFloat(accommodationCost) || 0,
+        
+        // Vol
+        flight_quantity: parseInt(flightQuantity) || 0,
+        flight_prix_unitaire: parseFloat(flightInfo?.price) || 0,
+        cout_vols: parseFloat(flightCost) || 0,
+        
+        // Totaux
+        sous_total: parseFloat(subtotal) || 0,
+        commission_groovenomad: parseFloat(commissionGrooveNomad) || 0,
+        total_ttc: parseFloat(totalCost) || 0,
+        
+        // Métadonnées
+        date_creation: new Date().toISOString(),
+        nombre_personnes: totalTickets
+      };
+
+      console.log('📋 Données structurées pour Airtable:', devisData);
+
+      const result = await sendDevisToAirtable(devisData);
+      
+      if (result.success) {
+        console.log('✅ Devis envoyé avec succès à Airtable');
+        setAirtableStatus({ 
+          type: 'success', 
+          message: 'Devis envoyé avec succès ! Un lien de paiement a été envoyé par email.' 
+        });
+        setPaymentLink(result.paymentLink);
+      } else {
+        console.error('❌ Erreur lors de l\'envoi du devis:', result.message);
+        setAirtableStatus({ type: 'error', message: 'Erreur lors de l\'envoi du devis' });
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'envoi du devis à Airtable:', error);
+      setAirtableStatus({ type: 'error', message: 'Erreur de connexion' });
+    } finally {
+      setIsSendingToAirtable(false);
+    }
   };
 
   // Générer le PDF du devis
@@ -857,12 +938,23 @@ const ReservationForm = ({ festival }) => {
           </Card>
         )}
 
+        {/* Statut de l'envoi à Airtable */}
+        {airtableStatus && (
+          <Alert 
+            severity={airtableStatus.type} 
+            sx={{ mb: 2, width: '100%' }}
+            onClose={() => setAirtableStatus(null)}
+          >
+            {airtableStatus.message}
+          </Alert>
+        )}
+
         {/* Boutons d'action */}
         <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant="contained"
             onClick={generateQuote}
-            disabled={!user || !selectedGroupSize || !selectedAccommodation || Object.values(ticketQuantities).every(qty => qty === 0)}
+            disabled={!user || !selectedGroupSize || !selectedAccommodation || Object.values(ticketQuantities).every(qty => qty === 0) || isSendingToAirtable}
             startIcon={<Calculate />}
             sx={{
               backgroundColor: '#fc6c34',
@@ -871,24 +963,29 @@ const ReservationForm = ({ festival }) => {
               }
             }}
           >
-            {!user ? 'Connectez-vous pour générer un devis' : 'Générer le devis'}
+            {!user ? 'Connectez-vous pour générer un devis' : 
+             isSendingToAirtable ? 'Envoi en cours...' : 'Générer le devis'}
           </Button>
           
           {showQuoteResult && quote && (
-            <Button
-              variant="contained"
-              onClick={generatePDF}
-              startIcon={<FaDownload />}
-              sx={{
-                backgroundColor: '#27ae60',
-                '&:hover': {
-                  backgroundColor: '#229954'
-                }
-              }}
-            >
-              Télécharger PDF
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                onClick={generatePDF}
+                startIcon={<FaDownload />}
+                sx={{
+                  backgroundColor: '#27ae60',
+                  '&:hover': {
+                    backgroundColor: '#229954'
+                  }
+                }}
+              >
+                Télécharger PDF
+              </Button>
+            </>
           )}
+          
+
           
           <Button
             variant="outlined"

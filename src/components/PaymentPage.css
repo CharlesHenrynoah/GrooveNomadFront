@@ -1,0 +1,440 @@
+/* Page de paiement principale */
+.payment-page {
+  min-height: 100vh;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.payment-container {
+  max-width: 1200px;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(252, 108, 52, 0.1);
+  min-height: 600px;
+  border: 1px solid rgba(252, 108, 52, 0.1);
+}
+
+/* Section d'informations (gauche) */
+.payment-info-section {
+  background: linear-gradient(135deg, #fc6c34 0%, #e55a29 100%);
+  color: white;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.info-header {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 40px;
+}
+
+.back-button {
+  color: white !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  margin-right: 20px;
+  transition: all 0.3s ease !important;
+}
+
+.back-button:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.company-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.company-logo {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.company-logo .MuiSvgIcon-root {
+  font-size: 24px;
+  color: white;
+}
+
+.company-name {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  color: white !important;
+  letter-spacing: 0.5px;
+}
+
+.invoice-details {
+  margin-bottom: 30px;
+}
+
+.invoice-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+}
+
+.invoice-number {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 1.4rem !important;
+}
+
+.festival-info {
+  margin-bottom: 40px;
+}
+
+.festival-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 8px !important;
+  font-weight: 500 !important;
+}
+
+.festival-name {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 1.2rem !important;
+}
+
+.amount-section {
+  margin-bottom: 60px;
+}
+
+.amount-display {
+  color: white !important;
+  font-weight: 700 !important;
+  font-size: 3rem !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.payment-footer {
+  margin-top: auto;
+}
+
+.powered-by {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 0.8rem !important;
+  margin-bottom: 15px !important;
+  display: block;
+}
+
+.footer-links {
+  display: flex;
+  gap: 20px;
+}
+
+.footer-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 0.8rem !important;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: white !important;
+}
+
+/* Section formulaire (droite) */
+.payment-form-section {
+  background: white;
+  padding: 50px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 450px;
+}
+
+.form-title {
+  color: #2c2c2c !important;
+  font-weight: 600 !important;
+  font-size: 1.8rem !important;
+  margin-bottom: 30px !important;
+}
+
+.payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field-label {
+  color: #666 !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+}
+
+.form-field {
+  margin-bottom: 0 !important;
+}
+
+.form-field .MuiOutlinedInput-root {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.form-field .MuiOutlinedInput-root:hover {
+  border-color: #fc6c34;
+  background: #fff9f6;
+}
+
+.form-field .MuiOutlinedInput-root.Mui-focused {
+  border-color: #fc6c34;
+  box-shadow: 0 0 0 2px rgba(252, 108, 52, 0.2);
+  background: #fff9f6;
+}
+
+.form-field .MuiOutlinedInput-root.Mui-error {
+  border-color: #f44336;
+}
+
+.form-field .MuiOutlinedInput-input {
+  color: #2c2c2c;
+  font-weight: 500;
+  padding: 14px;
+}
+
+.form-field .MuiOutlinedInput-input::placeholder {
+  color: #999;
+  opacity: 1;
+}
+
+.form-field .MuiFormHelperText-root {
+  color: #f44336;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+.field-icon {
+  color: #999 !important;
+  font-size: 20px !important;
+}
+
+/* Champ numéro de carte */
+.card-number-field {
+  margin-bottom: 0 !important;
+}
+
+.card-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.card-icon {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: white;
+  min-width: 28px;
+  text-align: center;
+}
+
+.card-icon.visa {
+  background: #1a1f71;
+}
+
+.card-icon.mastercard {
+  background: #eb001b;
+}
+
+.card-icon.amex {
+  background: #006fcf;
+}
+
+.card-icon.discover {
+  background: #ff6000;
+}
+
+/* Ligne des détails de carte */
+.card-details-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.expiry-field,
+.cvc-field {
+  margin-bottom: 0 !important;
+}
+
+.info-icon {
+  color: #999 !important;
+  font-size: 18px !important;
+}
+
+/* Checkbox sauvegarde */
+.save-payment-label {
+  color: #2c2c2c !important;
+  font-size: 0.9rem !important;
+  margin: 0 !important;
+  align-items: flex-start !important;
+}
+
+.save-checkbox .MuiCheckbox-root {
+  color: #fc6c34 !important;
+  padding: 0 8px 0 0 !important;
+}
+
+.save-checkbox .MuiCheckbox-root.Mui-checked {
+  color: #fc6c34 !important;
+}
+
+.save-description {
+  color: #666 !important;
+  font-size: 0.85rem !important;
+  margin-top: -10px !important;
+  margin-bottom: 10px !important;
+  line-height: 1.4 !important;
+}
+
+/* Bouton de paiement */
+.pay-button {
+  background: #fc6c34 !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  padding: 16px !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  box-shadow: 0 2px 8px rgba(252, 108, 52, 0.3) !important;
+  transition: all 0.3s ease !important;
+  margin-top: 20px !important;
+}
+
+.pay-button:hover {
+  background: #e55a29 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(252, 108, 52, 0.4) !important;
+}
+
+.pay-button:disabled {
+  background: #ccc !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Texte de confirmation */
+.confirmation-text {
+  color: #666 !important;
+  font-size: 0.75rem !important;
+  text-align: center;
+  line-height: 1.4 !important;
+  margin-top: 20px !important;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+  .payment-container {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .payment-info-section {
+    min-height: 300px;
+    padding: 30px;
+  }
+  
+  .payment-form-section {
+    padding: 30px;
+  }
+  
+  .amount-display {
+    font-size: 2.5rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .payment-page {
+    padding: 10px;
+  }
+  
+  .payment-container {
+    border-radius: 8px;
+  }
+  
+  .payment-info-section {
+    padding: 20px;
+  }
+  
+  .payment-form-section {
+    padding: 20px;
+  }
+  
+  .form-title {
+    font-size: 1.5rem !important;
+  }
+  
+  .amount-display {
+    font-size: 2rem !important;
+  }
+  
+  .card-details-row {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .info-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .company-info {
+    align-self: center;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.payment-container {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* États de focus pour l'accessibilité */
+.form-field .MuiOutlinedInput-root:focus-within {
+  border-color: #fc6c34;
+  box-shadow: 0 0 0 2px rgba(252, 108, 52, 0.2);
+}
+
+.pay-button:focus-visible {
+  outline: 2px solid #fc6c34;
+  outline-offset: 2px;
+} 
