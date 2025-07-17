@@ -490,18 +490,9 @@ const Home = () => {
             scrollbarWidth: 'none',
           }}>
             {[
-              'Festivals de Jazz à Paris',
-              'Concerts Rock ce weekend',
-              'Artistes similaires à Daft Punk',
-              'Regenerate response',
-              'Use prompt suggestions', 
-              'Toggle web search',
-              'Select a tone',
-              'Improve',
-              'Make longer',
-              'Explain in simple words',
-              'Summarize in three lines',
-              'Translate content'
+              'A quel festival je peux aller avec un budget de 100 euros ?',
+              'Donne-moi des festivals de House',
+              'Est-ce qu\'il y a un festival au Canada ?'
             ].map((suggestion, index) => (
               <Button
                 key={index}
@@ -544,7 +535,7 @@ const Home = () => {
             <Box sx={{ position: 'relative' }}>
               <TextField
                 id="chat-input"
-                placeholder="Enter your prompt"
+                placeholder="Tapez votre message..."
                 multiline
                 minRows={1}
                 sx={{
@@ -591,7 +582,7 @@ const Home = () => {
                   },
                 }}
               >
-                Send
+                Envoyer
               </Button>
             </Box>
           </Box>

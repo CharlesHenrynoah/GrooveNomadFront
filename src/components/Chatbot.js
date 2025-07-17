@@ -78,6 +78,39 @@ const Chatbot = () => {
   const isMusicalTopic = (message) => {
     const lowerMessage = message.toLowerCase();
     
+    // Si c'est une conversation continue (questions courtes), accepter plus facilement
+    const conversationContinuers = [
+      'donne les moi', 'donne moi', 'montre les moi', 'montre moi', 'affiche les',
+      'liste les', 'présente les', 'dis moi', 'raconte moi', 'explique moi',
+      'oui', 'non', 'ok', 'merci', 'parfait', 'génial', 'cool', 'super',
+      'et', 'aussi', 'encore', 'plus', 'autre', 'autres', 'différent',
+      'lesquels', 'lesquelles', 'combien', 'comment', 'pourquoi', 'quand', 'où',
+      'peux tu', 'peux-tu', 'pourrais tu', 'pourrais-tu', 'aurais tu', 'aurais-tu'
+    ];
+    
+    // Vérifier si c'est une continuation de conversation
+    const isContinuation = conversationContinuers.some(continuer => 
+      lowerMessage.includes(continuer) || lowerMessage === continuer
+    );
+    
+    // Si c'est une continuation ET qu'on a déjà parlé de festivals, accepter
+    if (isContinuation && chatContext.conversationHistory.length > 0) {
+      const hasRecentFestivalContext = chatContext.conversationHistory.slice(-3).some(entry => 
+        entry.message && (
+          entry.message.toLowerCase().includes('festival') ||
+          entry.message.toLowerCase().includes('house') ||
+          entry.message.toLowerCase().includes('techno') ||
+          entry.message.toLowerCase().includes('concert') ||
+          entry.message.toLowerCase().includes('musique') ||
+          entry.extractedInfo?.genre
+        )
+      );
+      
+      if (hasRecentFestivalContext) {
+        return true;
+      }
+    }
+    
     // Mots-clés musicaux directs
     const musicalKeywords = [
       'festival', 'concert', 'artiste', 'musicien', 'dj', 'musique', 'electronic', 'électro',
@@ -190,49 +223,243 @@ const Chatbot = () => {
     return hasMusicalKeywords || hasFestivalContext || hasKnownArtist;
   };
 
-  // Analyser et stocker le contexte utilisateur
-  const analyzeUserContext = (userMessage) => {
+  // AGENT 1: Agent Critères - Analyse les critères de recherche
+  const agentCriteres = (userMessage) => {
     const lowerMessage = userMessage.toLowerCase();
     let newPreferences = {...chatContext.userPreferences};
     let newFilters = {...chatContext.lastFilters};
     
-    // Analyser le budget
-    const budgetMatch = lowerMessage.match(/budget[^0-9]*(\d+)/i) || 
-                       lowerMessage.match(/(\d+)[^0-9]*euro/i) ||
-                       lowerMessage.match(/moins de[^0-9]*(\d+)/i) ||
-                       lowerMessage.match(/pas plus de[^0-9]*(\d+)/i);
-    if (budgetMatch) {
-      newPreferences.budget = parseInt(budgetMatch[1]);
-      newFilters.budget = parseInt(budgetMatch[1]);
+    console.log('🎯 AGENT CRITÈRES activé:', userMessage);
+    
+    const criteres = {
+      budget: null,
+      lieu: null,
+      genre: null,
+      artiste: null,
+      atmosphere: null,
+      capacite: null,
+      duree: null,
+      hebergement: null,
+      periode: null,
+      experience: null,
+      confidence: 0
+    };
+    
+    // Analyser le budget avec patterns avancés
+    const budgetPatterns = [
+      /budget[^0-9]*(\d+)/i,
+      /(\d+)[^0-9]*euro/i,
+      /moins de[^0-9]*(\d+)/i,
+      /pas plus de[^0-9]*(\d+)/i,
+      /maximum[^0-9]*(\d+)/i,
+      /max[^0-9]*(\d+)/i,
+      /jusqu'à[^0-9]*(\d+)/i,
+      /(\d+)[^0-9]*€/i
+    ];
+    
+    for (const pattern of budgetPatterns) {
+      const match = lowerMessage.match(pattern);
+      if (match) {
+        criteres.budget = parseInt(match[1]);
+        newPreferences.budget = criteres.budget;
+        newFilters.budget = criteres.budget;
+        criteres.confidence += 20;
+        console.log('💰 Budget détecté:', criteres.budget);
+        break;
+      }
     }
     
-    // Analyser le lieu
-    const lieux = ['france', 'paris', 'lyon', 'marseille', 'toulouse', 'europe', 'allemagne', 'belgique', 'espagne', 'italie', 'pays-bas', 'amsterdam', 'berlin', 'londres'];
-    const lieuMatch = lieux.find(lieu => lowerMessage.includes(lieu));
-    if (lieuMatch) {
-      newPreferences.lieu = lieuMatch;
-      newFilters.lieu = lieuMatch;
+    // Détecter la suppression du budget
+    if (lowerMessage.includes('pas forcement') || lowerMessage.includes('n\'importe quel prix') || 
+        lowerMessage.includes('sans limite') || lowerMessage.includes('peu importe le prix')) {
+      delete newPreferences.budget;
+      delete newFilters.budget;
+      criteres.budget = null;
+      console.log('💸 Budget supprimé (pas de limite)');
     }
     
-    // Analyser le genre
-    const genres = ['techno', 'house', 'trance', 'hardstyle', 'drum and bass', 'dubstep', 'electronic', 'électro', 'underground', 'minimal', 'deep house'];
-    const genreMatch = genres.find(genre => lowerMessage.includes(genre));
-    if (genreMatch) {
-      newPreferences.genre = genreMatch;
-      newFilters.genre = genreMatch;
+    // Analyser le lieu avec mapping étendu
+    const lieuMappings = {
+      'allemagne': 'Germany',
+      'germany': 'Germany',
+      'deutschland': 'Germany',
+      'france': 'France',
+      'belgique': 'Belgium',
+      'belgium': 'Belgium',
+      'pays-bas': 'Netherlands',
+      'netherlands': 'Netherlands',
+      'hollande': 'Netherlands',
+      'espagne': 'Spain',
+      'spain': 'Spain',
+      'italie': 'Italy',
+      'italy': 'Italy',
+      'portugal': 'Portugal',
+      'canada': 'Canada',
+      'usa': 'USA',
+      'états-unis': 'USA',
+      'etats-unis': 'USA',
+      'united states': 'USA',
+      'royaume-uni': 'UK',
+      'uk': 'UK',
+      'angleterre': 'UK',
+      'suisse': 'Switzerland',
+      'switzerland': 'Switzerland',
+      'australie': 'Australia',
+      'australia': 'Australia',
+      'croatie': 'Croatia',
+      'croatia': 'Croatia',
+      'hongrie': 'Hungary',
+      'hungary': 'Hungary',
+      'serbie': 'Serbia',
+      'serbia': 'Serbia',
+      'vietnam': 'Vietnam',
+      'thailande': 'Thailand',
+      'thailand': 'Thailand',
+      'inde': 'India',
+      'india': 'India',
+      'islande': 'Iceland',
+      'iceland': 'Iceland'
+    };
+    
+    for (const [key, value] of Object.entries(lieuMappings)) {
+      if (lowerMessage.includes(key)) {
+        criteres.lieu = value;
+        newPreferences.lieu = value;
+        newFilters.lieu = value;
+        criteres.confidence += 25;
+        console.log('🌍 Lieu détecté:', value);
+        break;
+      }
+    }
+    
+    // Analyser le genre avec mapping étendu
+    const genreMappings = {
+      'house': 'House',
+      'techno': 'Techno',
+      'trance': 'Trance',
+      'hardstyle': 'Hardstyle',
+      'edm': 'EDM',
+      'psytrance': 'Psytrance',
+      'drum and bass': 'Drum',
+      'dubstep': 'Dubstep',
+      'electronic': 'Electronic',
+      'électro': 'Electronic',
+      'progressive': 'Progressive',
+      'minimal': 'Minimal',
+      'deep house': 'House',
+      'tech house': 'House',
+      'tribal': 'Tribal',
+      'ambient': 'Ambient',
+      'breakbeat': 'Breakbeat'
+    };
+    
+    for (const [key, value] of Object.entries(genreMappings)) {
+      if (lowerMessage.includes(key)) {
+        criteres.genre = value;
+        newPreferences.genre = value;
+        newFilters.genre = value;
+        criteres.confidence += 20;
+        console.log('🎵 Genre détecté:', value);
+        break;
+      }
+    }
+    
+    // Analyser l'artiste
+    const artistPatterns = [
+      /qui joue/,
+      /lineup/,
+      /programmation/,
+      /artiste/,
+      /dj/
+    ];
+    
+    if (artistPatterns.some(pattern => pattern.test(lowerMessage))) {
+      criteres.artiste = lowerMessage;
+      criteres.confidence += 15;
+      console.log('🎤 Recherche d\'artiste détectée');
+    }
+    
+    // Analyser l'atmosphère
+    const atmosphereKeywords = {
+      'intime': 'One-stage intimate',
+      'intimate': 'One-stage intimate',
+      'familial': 'Family-friendly',
+      'underground': 'Underground',
+      'commercial': 'Commercial',
+      'desert': 'Desert gathering',
+      'désert': 'Desert gathering',
+      'forêt': 'Forest rave',
+      'forest': 'Forest rave',
+      'plage': 'Beach',
+      'beach': 'Beach',
+      'multi-scene': 'Multi-stage',
+      'multi-scène': 'Multi-stage'
+    };
+    
+    for (const [key, value] of Object.entries(atmosphereKeywords)) {
+      if (lowerMessage.includes(key)) {
+        criteres.atmosphere = value;
+        criteres.confidence += 12;
+        console.log('🌟 Atmosphère détectée:', value);
+        break;
+      }
+    }
+    
+    // Analyser la capacité
+    const capacityPatterns = [
+      /petit[^0-9]*(\d+)/i,
+      /grand[^0-9]*(\d+)/i,
+      /(\d+)[^0-9]*personnes/i,
+      /capacité[^0-9]*(\d+)/i
+    ];
+    
+    for (const pattern of capacityPatterns) {
+      const match = lowerMessage.match(pattern);
+      if (match) {
+        criteres.capacite = parseInt(match[1]);
+        criteres.confidence += 10;
+        console.log('👥 Capacité détectée:', criteres.capacite);
+        break;
+      }
+    }
+    
+    // Analyser l'hébergement
+    const accommodationKeywords = {
+      'camping': 'Camping',
+      'hotel': 'Hotel',
+      'hôtel': 'Hotel',
+      'glamping': 'Glamping',
+      'bungalow': 'Bungalow',
+      'airbnb': 'Airbnb',
+      'auberge': 'Hostel',
+      'hostel': 'Hostel'
+    };
+    
+    for (const [key, value] of Object.entries(accommodationKeywords)) {
+      if (lowerMessage.includes(key)) {
+        criteres.hebergement = value;
+        criteres.confidence += 8;
+        console.log('🏨 Hébergement détecté:', value);
+        break;
+      }
     }
     
     // Analyser l'expérience
     if (lowerMessage.includes('première fois') || lowerMessage.includes('débutant') || lowerMessage.includes('novice')) {
-      newPreferences.experience = 'debutant';
+      criteres.experience = 'debutant';
+      criteres.confidence += 5;
+      console.log('👶 Expérience: débutant');
     }
     
     // Analyser la période
     const periodes = ['été', 'hiver', 'printemps', 'automne', 'juillet', 'août', 'juin', 'septembre'];
     const periodeMatch = periodes.find(periode => lowerMessage.includes(periode));
     if (periodeMatch) {
+      criteres.periode = periodeMatch;
       newPreferences.periode = periodeMatch;
       newFilters.periode = periodeMatch;
+      criteres.confidence += 10;
+      console.log('📅 Période détectée:', periodeMatch);
     }
     
     // Mettre à jour le contexte
@@ -244,120 +471,335 @@ const Chatbot = () => {
         message: userMessage,
         timestamp: new Date(),
         extractedInfo: { budget: newPreferences.budget, lieu: newPreferences.lieu, genre: newPreferences.genre }
-      }].slice(-10) // Garder seulement les 10 derniers messages
+      }].slice(-10)
     }));
     
-    return { newPreferences, newFilters };
+    console.log('🎯 AGENT CRITÈRES - Résultat:', { criteres, confidence: criteres.confidence });
+    
+    return { criteres, newPreferences, newFilters };
   };
 
-  // Rechercher dans les données Airtable avec contexte
-  const searchInFestivalsData = (query, contextFilters = {}) => {
+  // AGENT 2: Agent Données - Recherche dans la base de données Airtable
+  const agentDonnees = (query, criteres, contextFilters = {}) => {
     const searchTerm = query.toLowerCase();
     const results = [];
 
+    console.log('🔍 AGENT DONNÉES activé:', {
+      query: searchTerm,
+      criteres: criteres,
+      filters: contextFilters,
+      totalFestivals: festivalsData.length
+    });
+
+    // Utiliser les critères détectés par l'Agent Critères
+    const detectedCriteria = {
+      country: criteres.lieu || contextFilters.lieu,
+      genre: criteres.genre || contextFilters.genre,
+      budget: criteres.budget || contextFilters.budget,
+      artist: criteres.artiste,
+      atmosphere: criteres.atmosphere,
+      capacity: criteres.capacite,
+      accommodation: criteres.hebergement,
+      duration: criteres.duree,
+      month: criteres.periode || contextFilters.periode
+    };
+
+    console.log('🔍 AGENT DONNÉES - Critères reçus:', detectedCriteria);
+
+    // Filtrer les festivals selon TOUS les critères détectés ET les filtres contextuels
     festivalsData.forEach(festival => {
       let relevanceScore = 0;
       let matchedInfo = [];
       let passFilters = true;
 
-      // Appliquer les filtres contextuels
-      if (contextFilters.budget && festival.prix) {
-        const minPrice = Math.min(...festival.prix.filter(p => p > 0));
-        if (minPrice > contextFilters.budget) {
+      // FILTRE PAYS (priorité haute - exclusif)
+      const targetCountry = detectedCriteria.country || contextFilters.lieu;
+      if (targetCountry) {
+        const festivalCountry = festival.pays;
+        if (festivalCountry !== targetCountry) {
           passFilters = false;
-        }
-      }
-      
-      if (contextFilters.lieu) {
-        const lieuFilter = contextFilters.lieu.toLowerCase();
-        const festivalLieu = `${festival.ville} ${festival.pays}`.toLowerCase();
-        if (!festivalLieu.includes(lieuFilter)) {
-          passFilters = false;
-        }
-      }
-      
-      if (contextFilters.genre) {
-        const genreFilter = contextFilters.genre.toLowerCase();
-        if (!festival.genre?.toLowerCase().includes(genreFilter)) {
-          passFilters = false;
-        }
-      }
-      
-      if (contextFilters.periode) {
-        const periodeFilter = contextFilters.periode.toLowerCase();
-        const festivalDates = `${festival.dateDebut} ${festival.dateFin}`.toLowerCase();
-        if (!festivalDates.includes(periodeFilter)) {
-          passFilters = false;
+          console.log(`❌ Festival ${festival.nom} exclu: pays ${festivalCountry} !== ${targetCountry}`);
+        } else {
+          relevanceScore += 25; // Score élevé pour correspondance pays
+          matchedInfo.push(`Pays: ${festivalCountry}`);
+          console.log(`✅ Festival ${festival.nom} inclus: pays ${festivalCountry}`);
         }
       }
 
-      if (!passFilters) return;
-
-      // Recherche par nom de festival
-      if (festival.nom?.toLowerCase().includes(searchTerm)) {
-        relevanceScore += 10;
-        matchedInfo.push(`Festival: ${festival.nom}`);
+      // FILTRE GENRE (priorité haute)
+      const targetGenre = detectedCriteria.genre || contextFilters.genre;
+      if (targetGenre && festival.genre) {
+        if (festival.genre.toLowerCase().includes(targetGenre.toLowerCase())) {
+          relevanceScore += 20;
+          matchedInfo.push(`Genre: ${festival.genre}`);
+          console.log(`🎵 Genre correspondant: ${festival.genre}`);
+        } else {
+          // Pénalité pour genre non correspondant
+          relevanceScore -= 10;
+        }
       }
 
-      // Recherche par genre musical
-      if (festival.genre?.toLowerCase().includes(searchTerm)) {
-        relevanceScore += 8;
-        matchedInfo.push(`Genre: ${festival.genre}`);
+      // FILTRE BUDGET (priorité moyenne)
+      const targetBudget = detectedCriteria.budget || contextFilters.budget;
+      if (targetBudget && festival.prix && festival.prix.length > 0) {
+        const validPrices = festival.prix.filter(p => p > 0);
+        if (validPrices.length > 0) {
+          const minPrice = Math.min(...validPrices);
+          const maxPrice = Math.max(...validPrices);
+          
+          if (minPrice <= targetBudget) {
+            relevanceScore += 15;
+            matchedInfo.push(`Prix accessible: ${minPrice}€ <= ${targetBudget}€`);
+            console.log(`💰 Prix accessible: ${minPrice}€ pour budget ${targetBudget}€`);
+          } else {
+            // Pénalité pour prix trop élevé
+            relevanceScore -= 8;
+            console.log(`💸 Prix trop élevé: ${minPrice}€ > ${targetBudget}€`);
+          }
+        }
       }
 
-      // Recherche par ville/pays
-      if (festival.ville?.toLowerCase().includes(searchTerm) || 
-          festival.pays?.toLowerCase().includes(searchTerm)) {
-        relevanceScore += 6;
-        matchedInfo.push(`Lieu: ${festival.ville}, ${festival.pays}`);
+      // FILTRE ARTISTE (recherche dans le lineup)
+      if (detectedCriteria.artist && festival.lineup && festival.lineup.length > 0) {
+        const artistFound = festival.lineup.some(artiste => 
+          artiste.nom && artiste.nom.toLowerCase().includes(searchTerm)
+        );
+        if (artistFound) {
+          relevanceScore += 18;
+          matchedInfo.push(`Artiste trouvé dans le lineup`);
+          console.log(`🎤 Artiste trouvé dans le lineup de ${festival.nom}`);
+        }
       }
 
-      // Recherche dans le lineup
-      const artisteMatch = festival.lineup?.find(artiste => 
-        artiste.nom?.toLowerCase().includes(searchTerm)
-      );
-      if (artisteMatch) {
-        relevanceScore += 9;
-        matchedInfo.push(`Artiste: ${artisteMatch.nom}`);
+      // FILTRE ATMOSPHÈRE/AMBIANCE
+      if (detectedCriteria.atmosphere && festival.typeEvenement) {
+        if (festival.typeEvenement.toLowerCase().includes(detectedCriteria.atmosphere.toLowerCase())) {
+          relevanceScore += 12;
+          matchedInfo.push(`Atmosphère: ${festival.typeEvenement}`);
+          console.log(`🌟 Atmosphère correspondante: ${festival.typeEvenement}`);
+        }
       }
 
-      // Recherche par date
-      if (festival.dateDebut?.includes(searchTerm) || festival.dateFin?.includes(searchTerm)) {
-        relevanceScore += 5;
-        matchedInfo.push(`Date: ${festival.dateDebut} - ${festival.dateFin}`);
+      // FILTRE CAPACITÉ
+      if (detectedCriteria.capacity && festival.capacite) {
+        const festivalCapacity = parseInt(festival.capacite);
+        if (festivalCapacity && festivalCapacity >= detectedCriteria.capacity) {
+          relevanceScore += 8;
+          matchedInfo.push(`Capacité: ${festivalCapacity} personnes`);
+          console.log(`👥 Capacité suffisante: ${festivalCapacity} >= ${detectedCriteria.capacity}`);
+        }
       }
 
-      // Recherche dans la description
-      if (festival.description?.toLowerCase().includes(searchTerm)) {
-        relevanceScore += 3;
-        matchedInfo.push(`Description trouvée`);
+      // FILTRE HÉBERGEMENT
+      if (detectedCriteria.accommodation && festival.hebergement) {
+        const accommodationMatch = festival.hebergement.some(h => 
+          h.toLowerCase().includes(detectedCriteria.accommodation.toLowerCase())
+        );
+        if (accommodationMatch) {
+          relevanceScore += 10;
+          matchedInfo.push(`Hébergement disponible: ${detectedCriteria.accommodation}`);
+          console.log(`🏨 Hébergement correspondant trouvé`);
+        }
       }
 
-      // Bonus pour les filtres contextuels appliqués
-      if (contextFilters.budget && festival.prix) {
-        const minPrice = Math.min(...festival.prix.filter(p => p > 0));
-        if (minPrice <= contextFilters.budget) {
+      // FILTRE DURÉE
+      if (detectedCriteria.duration && festival.duree) {
+        const festivalDuration = parseInt(festival.duree);
+        if (festivalDuration && Math.abs(festivalDuration - detectedCriteria.duration) <= 1) {
+          relevanceScore += 6;
+          matchedInfo.push(`Durée: ${festivalDuration} jours`);
+          console.log(`⏱️ Durée correspondante: ${festivalDuration} jours`);
+        }
+      }
+
+      // RECHERCHE TEXTUELLE AVANCÉE dans tous les champs
+      if (!targetCountry && !targetGenre && !targetBudget && !detectedCriteria.artist) {
+        // Recherche par nom de festival
+        if (festival.nom?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 15;
+          matchedInfo.push(`Festival: ${festival.nom}`);
+        }
+
+        // Recherche par ville/pays
+        if (festival.ville?.toLowerCase().includes(searchTerm) || 
+            festival.pays?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 12;
+          matchedInfo.push(`Lieu: ${festival.ville}, ${festival.pays}`);
+        }
+
+        // Recherche par venue/lieu
+        if (festival.lieu?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 10;
+          matchedInfo.push(`Venue: ${festival.lieu}`);
+        }
+
+        // Recherche par genre
+        if (festival.genre?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 10;
+          matchedInfo.push(`Genre: ${festival.genre}`);
+        }
+
+        // Recherche dans la description
+        if (festival.description?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 8;
+          matchedInfo.push(`Description contient le terme recherché`);
+        }
+
+        // Recherche dans les artistes du lineup
+        if (festival.lineup && festival.lineup.length > 0) {
+          const artistMatch = festival.lineup.some(artiste => 
+            artiste.nom && artiste.nom.toLowerCase().includes(searchTerm)
+          );
+          if (artistMatch) {
+            relevanceScore += 12;
+            matchedInfo.push(`Artiste dans le lineup`);
+          }
+        }
+
+        // Recherche par aéroport le plus proche
+        if (festival.aeroport?.toLowerCase().includes(searchTerm)) {
           relevanceScore += 5;
+          matchedInfo.push(`Aéroport: ${festival.aeroport}`);
+        }
+
+        // Recherche par type d'événement/atmosphère
+        if (festival.typeEvenement?.toLowerCase().includes(searchTerm)) {
+          relevanceScore += 8;
+          matchedInfo.push(`Type: ${festival.typeEvenement}`);
         }
       }
 
-      if (relevanceScore > 0 || passFilters) {
+      // Bonus pour les festivals avec des données complètes
+      let completenessBonus = 0;
+      if (festival.description && festival.description.trim()) completenessBonus += 2;
+      if (festival.lineup && festival.lineup.length > 0) completenessBonus += 3;
+      if (festival.medias && festival.medias.length > 0) completenessBonus += 2;
+      if (festival.prix && festival.prix.some(p => p > 0)) completenessBonus += 2;
+      if (festival.hebergement && festival.hebergement.length > 0) completenessBonus += 2;
+
+      relevanceScore += completenessBonus;
+
+      // Ajouter le festival s'il passe les filtres OU a un score de pertinence suffisant
+      if (passFilters && relevanceScore > 0) {
         results.push({
           festival,
           score: relevanceScore,
-          matchedInfo
+          matchedInfo,
+          completenessBonus
         });
       }
     });
 
-    // Trier par score de pertinence
-    return results.sort((a, b) => b.score - a.score);
+    // Trier par score de pertinence (décroissant)
+    const sortedResults = results.sort((a, b) => b.score - a.score);
+    
+    console.log('🔍 AGENT DONNÉES - Résultats:', {
+      totalFound: sortedResults.length,
+      criteria: detectedCriteria,
+      topResults: sortedResults.slice(0, 5).map(r => ({
+        name: r.festival.nom,
+        country: r.festival.pays,
+        genre: r.festival.genre,
+        score: r.score,
+        matched: r.matchedInfo,
+        completeness: r.completenessBonus
+      }))
+    });
+
+    return {
+      results: sortedResults,
+      criteria: detectedCriteria,
+      totalFound: sortedResults.length,
+      searchPerformed: true
+    };
   };
 
-  // Générer une réponse intelligente avec Gemini et chaîne de thought
+  // AGENT 3: Agent Synthèse - Combine les résultats et génère la synthèse finale
+  const agentSynthese = (criteres, donneesResults, userMessage) => {
+    console.log('🧠 AGENT SYNTHÈSE activé');
+    
+    const synthese = {
+      criteresDetectes: criteres,
+      nombreResultats: donneesResults.totalFound,
+      resultatsFiltrés: donneesResults.results.slice(0, 3),
+      scoreMoyenPertinence: 0,
+      recommandationsPrincipales: [],
+      informationsManquantes: [],
+      contexteSuggestions: [],
+      confidence: criteres.confidence || 0
+    };
+    
+    // Calculer le score moyen de pertinence
+    if (donneesResults.results.length > 0) {
+      synthese.scoreMoyenPertinence = donneesResults.results.reduce((sum, r) => sum + r.score, 0) / donneesResults.results.length;
+    }
+    
+    // Générer les recommandations principales
+    donneesResults.results.slice(0, 3).forEach((result, index) => {
+      const festival = result.festival;
+      const recommendation = {
+        rang: index + 1,
+        nom: festival.nom,
+        pays: festival.pays,
+        genre: festival.genre,
+        score: result.score,
+        raisonsRecommandation: result.matchedInfo,
+        informationsClés: []
+      };
+      
+      // Ajouter les informations clés disponibles
+      if (festival.ville) recommendation.informationsClés.push(`Ville: ${festival.ville}`);
+      if (festival.capacite) recommendation.informationsClés.push(`Capacité: ${festival.capacite} personnes`);
+      if (festival.duree) recommendation.informationsClés.push(`Durée: ${festival.duree} jours`);
+      if (festival.prix && festival.prix.some(p => p > 0)) {
+        const validPrices = festival.prix.filter(p => p > 0);
+        recommendation.informationsClés.push(`Prix: ${Math.min(...validPrices)}€-${Math.max(...validPrices)}€`);
+      }
+      if (festival.lineup && festival.lineup.length > 0) {
+        const artistes = festival.lineup.map(a => a.nom).filter(n => n).slice(0, 3);
+        if (artistes.length > 0) recommendation.informationsClés.push(`Artistes: ${artistes.join(', ')}`);
+      }
+      if (festival.aeroport) recommendation.informationsClés.push(`Aéroport: ${festival.aeroport}`);
+      if (festival.typeEvenement) recommendation.informationsClés.push(`Atmosphère: ${festival.typeEvenement}`);
+      
+      synthese.recommandationsPrincipales.push(recommendation);
+    });
+    
+    // Identifier les informations manquantes
+    if (!criteres.lieu && !criteres.budget && !criteres.genre) {
+      synthese.informationsManquantes.push("Critères de recherche peu spécifiques");
+    }
+    if (!criteres.budget) {
+      synthese.informationsManquantes.push("Budget non spécifié");
+    }
+    if (!criteres.lieu) {
+      synthese.informationsManquantes.push("Lieu de préférence non spécifié");
+    }
+    
+    // Générer des suggestions contextuelles
+    if (synthese.nombreResultats === 0) {
+      synthese.contexteSuggestions.push("Essayez d'élargir vos critères de recherche");
+      synthese.contexteSuggestions.push("Vérifiez l'orthographe des termes utilisés");
+    } else if (synthese.nombreResultats > 10) {
+      synthese.contexteSuggestions.push("Beaucoup de résultats trouvés, vous pourriez affiner vos critères");
+    }
+    
+    // Suggestions basées sur les critères manquants
+    if (criteres.lieu && !criteres.genre) {
+      synthese.contexteSuggestions.push("Vous pourriez spécifier un genre musical pour affiner");
+    }
+    if (criteres.genre && !criteres.lieu) {
+      synthese.contexteSuggestions.push("Vous pourriez spécifier un pays ou une région");
+    }
+    
+    console.log('🧠 AGENT SYNTHÈSE - Résultat:', synthese);
+    
+    return synthese;
+  };
+
+  // Système multi-agents avec synthèse intelligente
   const generateGeminiResponse = async (userMessage) => {
-    // Étape 1: Analyser le contexte utilisateur (avant le try-catch pour être accessible partout)
-    const { newPreferences, newFilters } = analyzeUserContext(userMessage);
+    console.log('🚀 SYSTÈME MULTI-AGENTS activé pour:', userMessage);
     
     try {
       // Clé API Gemini
@@ -367,45 +809,62 @@ const Chatbot = () => {
         throw new Error('Clé API Gemini manquante');
       }
       
-      // Étape 2: Rechercher avec le contexte
-      const searchResults = searchInFestivalsData(userMessage, newFilters);
+      // ÉTAPE 1: Agent Critères - Analyser les critères de recherche
+      console.log('🎯 Activation de l\'Agent Critères...');
+      const { criteres, newPreferences, newFilters } = agentCriteres(userMessage);
       
-      // Étape 3: Préparer le contexte avec les données des festivals
+      // ÉTAPE 2: Agent Données - Rechercher dans la base de données
+      console.log('🔍 Activation de l\'Agent Données...');
+      const donneesResults = agentDonnees(userMessage, criteres, newFilters);
+      
+      // ÉTAPE 3: Agent Synthèse - Combiner les résultats
+      console.log('🧠 Activation de l\'Agent Synthèse...');
+      const synthese = agentSynthese(criteres, donneesResults, userMessage);
+      
+      // ÉTAPE 4: Préparer le contexte avec la synthèse des 3 agents
       let contextData = "";
       
-      if (searchResults.length > 0) {
-        contextData = "FESTIVALS TROUVÉS:\n";
+      contextData += "SYNTHÈSE DES AGENTS:\n";
+      contextData += `- Critères détectés: ${JSON.stringify(synthese.criteresDetectes)}\n`;
+      contextData += `- Confidence: ${synthese.confidence}/100\n`;
+      contextData += `- Résultats trouvés: ${synthese.nombreResultats}\n`;
+      contextData += `- Score moyen pertinence: ${synthese.scoreMoyenPertinence.toFixed(1)}\n`;
+      
+      if (synthese.nombreResultats > 0) {
+        contextData += "\nRECOMMANDATIONS PRINCIPALES:\n";
         
-        // Prendre les 2 meilleurs résultats pour éviter un prompt trop long
-        searchResults.slice(0, 2).forEach((result, index) => {
-          const festival = result.festival;
-          contextData += `${index + 1}. ${festival.nom}`;
-          if (festival.genre) contextData += ` (${festival.genre})`;
-          if (festival.ville && festival.pays) contextData += ` - ${festival.ville}, ${festival.pays}`;
-          if (festival.dateDebut && festival.dateFin) contextData += ` - ${festival.dateDebut} au ${festival.dateFin}`;
+        synthese.recommandationsPrincipales.forEach((recommendation, index) => {
+          contextData += `${recommendation.rang}. ${recommendation.nom} (${recommendation.genre || 'Genre non spécifié'})`;
+          contextData += ` - ${recommendation.pays || 'Pays non spécifié'}`;
+          contextData += ` - Score: ${recommendation.score}`;
+          contextData += ` - Raisons: ${recommendation.raisonsRecommandation.join(', ')}`;
           
-          if (festival.lineup && festival.lineup.length > 0) {
-            const artistes = festival.lineup.map(a => a.nom).filter(n => n).slice(0, 3);
-            if (artistes.length > 0) contextData += ` - Artistes: ${artistes.join(', ')}`;
-          }
-          
-          if (festival.prix && festival.prix.some(p => p > 0)) {
-            const validPrices = festival.prix.filter(p => p > 0);
-            contextData += ` - Prix: ${validPrices.join('-')}€`;
+          if (recommendation.informationsClés.length > 0) {
+            contextData += ` - Infos: ${recommendation.informationsClés.join(', ')}`;
           }
           
           contextData += "\n";
         });
       } else {
-        // Si pas de résultats spécifiques, donner un contexte général
-        contextData = "FESTIVALS DISPONIBLES:\n";
+        contextData += "\nAucun festival trouvé avec ces critères.\n";
+        contextData += "FESTIVALS DISPONIBLES (échantillon):\n";
         festivalsData.slice(0, 3).forEach((festival, index) => {
-          contextData += `${index + 1}. ${festival.nom} (${festival.genre || 'Musique'}) - ${festival.ville || 'Lieu non spécifié'}\n`;
+          contextData += `${index + 1}. ${festival.nom} (${festival.genre || 'Musique'}) - ${festival.ville || 'Lieu non spécifié'}, ${festival.pays || 'Pays non spécifié'}`;
+          if (festival.prix && festival.prix.some(p => p > 0)) {
+            const validPrices = festival.prix.filter(p => p > 0);
+            contextData += ` - Prix: ${Math.min(...validPrices)}€-${Math.max(...validPrices)}€`;
+          }
+          contextData += "\n";
         });
-        
-        if (festivalsData.length > 3) {
-          contextData += `... et ${festivalsData.length - 3} autres festivals.\n`;
-        }
+      }
+      
+      // Ajouter les informations manquantes et suggestions
+      if (synthese.informationsManquantes.length > 0) {
+        contextData += `\nINFORMATIONS MANQUANTES: ${synthese.informationsManquantes.join(', ')}\n`;
+      }
+      
+      if (synthese.contexteSuggestions.length > 0) {
+        contextData += `\nSUGGESTIONS: ${synthese.contexteSuggestions.join(', ')}\n`;
       }
 
       // Préparer l'historique de conversation
@@ -420,15 +879,24 @@ const Chatbot = () => {
         ? `Préférences utilisateur: ${JSON.stringify(newPreferences)}` 
         : "Pas de préférences spécifiques détectées";
       
-      // Construire le prompt pour Gemini avec chaîne de thought
-      const prompt = `Tu es GrooveBot, assistant spécialisé dans les festivals de musique.
+      // Construire le prompt pour Gemini avec système multi-agents
+      const prompt = `Tu es GrooveBot, assistant spécialisé dans les festivals de musique avec un système multi-agents ultra-performant.
 
-PROCESSUS INTERNE (NE PAS MONTRER À L'UTILISATEUR):
-1. ANALYSER: Comprendre ce que l'utilisateur demande et son contexte
-2. FILTRER: Sélectionner les festivals pertinents selon ses critères
-3. RÉPONDRE: Donner une réponse personnalisée et conversationnelle
+SYSTÈME MULTI-AGENTS ACTIVÉ:
+Tu travailles avec 3 agents spécialisés qui ont déjà analysé la demande:
+1. 🎯 AGENT CRITÈRES: A analysé et extrait tous les critères de recherche
+2. 🔍 AGENT DONNÉES: A recherché dans la base de données Airtable
+3. 🧠 AGENT SYNTHÈSE: A combiné les résultats et généré une synthèse
 
-IMPORTANT: Ne montre JAMAIS ce processus à l'utilisateur. Réponds directement et naturellement.
+IMPORTANT: Les agents ont déjà fait le travail d'analyse et de recherche. Tu dois utiliser leur synthèse pour donner une réponse naturelle et conversationnelle.
+
+INSTRUCTIONS:
+- Utilise la synthèse fournie pour répondre de manière personnalisée
+- Explique POURQUOI ces festivals correspondent aux critères détectés
+- Mentionne les informations clés disponibles (prix, capacité, lineup, etc.)
+- Sois enthousiaste et naturel, comme si tu connaissais personnellement ces festivals
+- Ne montre JAMAIS le processus technique ou les scores
+- Adapte ton ton selon le niveau de confidence de la détection des critères
 
 MÉMOIRE CONTEXTUELLE:
 ${userPreferencesText}
@@ -439,7 +907,7 @@ ${conversationHistory}
 DONNÉES DISPONIBLES:
 ${contextData}
 
-RÈGLES IMPORTANTES:
+RÈGLES IMPORTANTES ULTRA-PERFORMANTES:
 - Utilise la mémoire contextuelle des conversations précédentes
 - Réponds UNIQUEMENT sur les festivals, musique, artistes, événements musicaux
 - Sois enthousiaste et conversationnel avec des emojis
@@ -447,6 +915,19 @@ RÈGLES IMPORTANTES:
 - Comprends le contexte même sans mots-clés musicaux directs
 - Tu peux répondre aux questions générales sur les artistes musicaux (biographie, style, collaborations, etc.)
 - Relie toujours les artistes aux festivals où ils pourraient jouer
+- UTILISE TOUTES LES DONNÉES DISPONIBLES: lineup, venue, capacité, hébergement, aéroport, description, atmosphère, durée, prix détaillés
+- Explique POURQUOI un festival correspond aux critères demandés
+- Donne des informations pratiques et concrètes (transport, hébergement, prix, durée, etc.)
+- Utilise le score de pertinence pour justifier tes recommandations
+- Mentionne les détails spécifiques qui font la différence entre les festivals
+
+FORMATAGE OBLIGATOIRE:
+- N'UTILISE JAMAIS d'astérisques (*) pour mettre en gras ou souligner
+- N'UTILISE JAMAIS de markdown (**texte**, __texte__, ###, etc.)
+- Pour les listes, utilise des tirets (-) ou des puces (•) uniquement
+- Écris en texte plain sans formatage spécial
+- Exemple correct: "Festival Tomorrowland en Belgique" (pas "**Festival Tomorrowland**")
+- Exemple correct: "- Awakenings Festival" (pas "* **Awakenings Festival**")
 
 TYPES DE QUESTIONS QUE TU DOIS TRAITER:
 1. BUDGET: "j'ai un budget de 100€", "pas cher", "économique", "gratuit"
@@ -471,12 +952,25 @@ INSTRUCTIONS SPÉCIALES:
 
 QUESTION ACTUELLE: "${userMessage}"
 
-Utilise la chaîne de thought pour analyser, filtrer et répondre intelligemment.`;
+INSTRUCTIONS POUR LA CHAÎNE DE PENSÉE:
+1. Commence par analyser PRÉCISÉMENT ce que l'utilisateur demande
+2. Identifie les critères exacts (budget, dates, genre, lieu)
+3. Filtre les festivals selon CES critères spécifiques
+4. Réponds de manière PRÉCISE et PERTINENTE à la question posée
+5. Évite les réponses génériques - sois spécifique à la demande
+
+ATTENTION FORMATAGE:
+- Écris UNIQUEMENT en texte plain, sans aucun formatage
+- Pas d'astérisques (*), pas de markdown (**), pas de soulignement
+- Utilise des tirets (-) pour les listes si nécessaire
+- Exemple: "Awakenings Festival en Belgique" (pas "**Awakenings Festival**")
+
+Utilise cette chaîne de thought interne pour donner une réponse précise et pertinente.`;
 
       console.log('🔑 Clé API Gemini:', GEMINI_API_KEY ? 'Présente' : 'Manquante');
       console.log('🧠 Contexte utilisateur analysé:', newPreferences);
       console.log('🔍 Filtres appliqués:', newFilters);
-      console.log('📊 Résultats trouvés:', searchResults.length, 'festivals');
+      console.log('📊 Résultats trouvés:', synthese.nombreResultats, 'festivals');
       console.log('📝 Prompt envoyé à Gemini:', prompt.substring(0, 200) + '...');
       
       const requestBody = {
@@ -513,9 +1007,23 @@ Utilise la chaîne de thought pour analyser, filtrer et répondre intelligemment
       const data = await response.json();
       
       if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+        // Utiliser la synthèse pour retourner les meilleurs festivals
+        let festivalsToReturn = null;
+        
+        if (synthese.nombreResultats > 0) {
+          festivalsToReturn = synthese.resultatsFiltrés.map(r => r.festival);
+        } else {
+          // Si pas de résultats spécifiques, prendre les premiers festivals de la base
+          festivalsToReturn = festivalsData.slice(0, 3);
+        }
+        
+        console.log('🚀 SYSTÈME MULTI-AGENTS - Réponse générée avec succès');
+        console.log('📊 Festivals retournés:', festivalsToReturn.map(f => f.nom));
+        
         return {
           text: data.candidates[0].content.parts[0].text,
-          festivals: searchResults.length > 0 ? searchResults.slice(0, 3).map(r => r.festival) : null
+          festivals: festivalsToReturn,
+          synthese: synthese // Ajouter la synthèse pour debug
         };
       } else {
         throw new Error('Réponse invalide de Gemini');
@@ -524,31 +1032,50 @@ Utilise la chaîne de thought pour analyser, filtrer et répondre intelligemment
     } catch (error) {
       console.error('❌ Erreur lors de l\'appel à Gemini:', error);
       
-      // Fallback vers la réponse basique si Gemini ne fonctionne pas
-      const fallbackSearchResults = searchInFestivalsData(userMessage, newFilters);
-      
-      if (fallbackSearchResults.length > 0) {
-        const topResult = fallbackSearchResults[0];
-        const festival = topResult.festival;
+      // Fallback avec le système multi-agents même si Gemini ne fonctionne pas
+      try {
+        console.log('🔄 Activation du fallback multi-agents...');
         
-        let response = `🎵 J'ai trouvé des informations sur **${festival.nom}** !\n\n`;
+        const { criteres, newPreferences, newFilters } = agentCriteres(userMessage);
+        const donneesResults = agentDonnees(userMessage, criteres, newFilters);
+        const synthese = agentSynthese(criteres, donneesResults, userMessage);
         
-        if (festival.genre) response += `🎶 Genre: ${festival.genre}\n`;
-        if (festival.ville && festival.pays) response += `📍 Lieu: ${festival.ville}, ${festival.pays}\n`;
-        if (festival.dateDebut && festival.dateFin) response += `📅 Dates: ${festival.dateDebut} - ${festival.dateFin}\n`;
-        
-        if (festival.lineup && festival.lineup.length > 0) {
-          response += `\n🎤 Lineup:\n`;
-          festival.lineup.forEach(artiste => {
-            if (artiste.nom) response += `• ${artiste.nom}\n`;
-          });
+        if (synthese.nombreResultats > 0) {
+          const topRecommendation = synthese.recommandationsPrincipales[0];
+          
+          let response = `🎵 J'ai trouvé des informations sur ${topRecommendation.nom} !\n\n`;
+          
+          if (topRecommendation.genre) response += `🎶 Genre: ${topRecommendation.genre}\n`;
+          if (topRecommendation.pays) response += `📍 Pays: ${topRecommendation.pays}\n`;
+          if (topRecommendation.score) response += `⭐ Score de pertinence: ${topRecommendation.score}\n`;
+          
+          if (topRecommendation.raisonsRecommandation.length > 0) {
+            response += `\n✅ Pourquoi ce festival vous correspond:\n`;
+            topRecommendation.raisonsRecommandation.forEach(raison => {
+              response += `• ${raison}\n`;
+            });
+          }
+          
+          if (topRecommendation.informationsClés.length > 0) {
+            response += `\n📋 Informations clés:\n`;
+            topRecommendation.informationsClés.forEach(info => {
+              response += `• ${info}\n`;
+            });
+          }
+          
+          return {
+            text: response,
+            festivals: synthese.resultatsFiltrés.map(r => r.festival),
+            synthese: synthese
+          };
+        } else {
+          return {
+            text: "Désolé, je n'ai pas trouvé de festivals correspondant à vos critères. Essayez d'élargir votre recherche ! 🤖",
+            festivals: festivalsData.slice(0, 3)
+          };
         }
-        
-        return {
-          text: response,
-          festivals: fallbackSearchResults.slice(0, 3).map(r => r.festival)
-        };
-      } else {
+      } catch (fallbackError) {
+        console.error('❌ Erreur dans le fallback multi-agents:', fallbackError);
         return {
           text: "Désolé, je rencontre des difficultés techniques. Pouvez-vous réessayer votre question ? 🤖",
           festivals: null
@@ -607,33 +1134,41 @@ Utilise la chaîne de thought pour analyser, filtrer et répondre intelligemment
     setInputValue('');
     setIsTyping(true);
 
-        try {
+    try {
       // Appel asynchrone à Gemini
       const botResponse = await getBotResponse(currentInputValue);
       
-      const botMessage = {
-        id: Date.now() + 1,
-        text: botResponse.text,
-        sender: 'bot',
-        timestamp: new Date(),
-        festivals: botResponse.festivals
-      };
+      // Simuler un effet de typing plus réaliste
+      const typingDuration = Math.min(Math.max(botResponse.text.length * 20, 1500), 4000); // Entre 1.5s et 4s
+      
+      setTimeout(() => {
+        const botMessage = {
+          id: Date.now() + 1,
+          text: botResponse.text,
+          sender: 'bot',
+          timestamp: new Date(),
+          festivals: botResponse.festivals
+        };
 
-      setMessages(prev => [...prev, botMessage]);
+        setMessages(prev => [...prev, botMessage]);
+        setIsTyping(false);
+      }, typingDuration);
+      
     } catch (error) {
       console.error('❌ Erreur lors de la génération de la réponse:', error);
       
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: "Désolé, je rencontre des difficultés techniques. Pouvez-vous réessayer votre question ? 🤖",
-        sender: 'bot',
-        timestamp: new Date(),
-        festivals: null
-      };
+      setTimeout(() => {
+        const errorMessage = {
+          id: Date.now() + 1,
+          text: "Désolé, je rencontre des difficultés techniques. Pouvez-vous réessayer votre question ? 🤖",
+          sender: 'bot',
+          timestamp: new Date(),
+          festivals: null
+        };
 
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsTyping(false);
+        setMessages(prev => [...prev, errorMessage]);
+        setIsTyping(false);
+      }, 1500);
     }
   };
 
@@ -645,10 +1180,9 @@ Utilise la chaîne de thought pour analyser, filtrer et répondre intelligemment
   };
 
   const quickActions = [
-    "Événements près de moi",
-    "Genres musicaux",
-    "Comment s'inscrire ?",
-    "Tarifs des concerts"
+    "A quel festival je peux aller avec un budget de 100 euros ?",
+    "Donne-moi des festivals de House",
+    "Est-ce qu'il y a un festival au Canada ?"
   ];
 
   const handleQuickAction = (action) => {
