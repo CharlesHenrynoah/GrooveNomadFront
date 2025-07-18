@@ -1268,7 +1268,7 @@ Utilise cette chaîne de thought interne pour donner une réponse précise et pe
         </Link>
         <div className="bot-info">
           <div className="bot-avatar">
-            <img src="/teslabot.png" alt="GroovBot" className="bot-avatar-img" />
+            <img src="/ChatGPT Image 18 juil. 2025, 03_01_37.png" alt="GroovBot" className="bot-avatar-img" />
           </div>
           <div className="bot-details">
             <h1>GroovBot</h1>
@@ -1284,7 +1284,7 @@ Utilise cette chaîne de thought interne pour donner une réponse précise et pe
             <div key={message.id} className={`message ${message.sender}`}>
               <div className="message-avatar">
                 {message.sender === 'bot' ? (
-                  <img src="/teslabot.png" alt="GroovBot" className="message-avatar-img" />
+                  <img src="/ChatGPT Image 18 juil. 2025, 03_01_37.png" alt="GroovBot" className="message-avatar-img" />
                 ) : (
                   user && user.photo ? (
                     <img src={user.photo} alt="Photo de profil" className="message-avatar-img" />
@@ -1321,7 +1321,7 @@ Utilise cette chaîne de thought interne pour donner une réponse précise et pe
           {isTyping && (
             <div className="message bot">
               <div className="message-avatar">
-                <img src="/teslabot.png" alt="GroovBot" className="message-avatar-img" />
+                <img src="/ChatGPT Image 18 juil. 2025, 03_01_37.png" alt="GroovBot" className="message-avatar-img" />
               </div>
               <div className="message-content">
                 <div className="message-bubble typing">

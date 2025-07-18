@@ -1,41 +1,64 @@
 .chatbot-page {
   min-height: 100vh;
-  background: url('../../public/arriere.png') center/cover no-repeat;
+  background: url('../../public/oSewxuaa9NZpJqp8zD5Xx1LCo5SYqcbNJYnBqJ8a.png') center/cover no-repeat fixed;
   display: flex;
   flex-direction: column;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Poppins', sans-serif;
+  position: relative;
+}
+
+/* Overlay glassmorphism - blur l'image de fond */
+.chatbot-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Header */
 .chatbot-header {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 20px 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  margin: 20px;
+  padding: 25px 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #8e44ad;
+  color: #fc6c34;
   text-decoration: none;
   font-weight: 600;
-  padding: 10px 15px;
-  border-radius: 10px;
+  padding: 12px 20px;
+  border-radius: 30px;
   transition: all 0.3s ease;
-  background: rgba(142, 68, 173, 0.1);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .back-btn:hover {
-  background: rgba(142, 68, 173, 0.2);
+  background: rgba(252, 108, 52, 0.2);
   transform: translateX(-3px);
-  color: #732d91;
+  color: #fc6c34;
+  box-shadow: 0 4px 12px rgba(252, 108, 52, 0.3);
 }
 
 .bot-info {
@@ -47,7 +70,10 @@
 .bot-avatar {
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -69,13 +95,14 @@
 
 .bot-details h1 {
   margin: 0;
-  color: #2c3e50;
+  color: white;
   font-size: 1.5rem;
   font-weight: bold;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .bot-status {
-  color: #27ae60;
+  color: #fc6c34;
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -85,26 +112,29 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
+  margin-top: -20px;
   width: 100%;
   padding: 20px;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 
 .messages-container {
   flex: 1;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
-  padding: 30px;
+  padding: 40px;
   margin-bottom: 20px;
   overflow-y: auto;
-  max-height: 60vh;
-  min-height: 400px;
+  max-height: 70vh;
+  min-height: 600px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
 }
 
 /* Messages */
@@ -139,12 +169,18 @@
 }
 
 .message.bot .message-avatar {
-  background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
 }
 
 .message.user .message-avatar {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  background: rgba(252, 108, 52, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(252, 108, 52, 0.3);
   color: white;
 }
 
@@ -166,20 +202,26 @@
 }
 
 .message.bot .message-bubble {
-  background: rgba(248, 249, 250, 0.8);
-  color: #2c3e50;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom-left-radius: 5px;
 }
 
 .message.user .message-bubble {
-  background: rgba(142, 68, 173, 0.8);
+  background: rgba(252, 108, 52, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: white;
+  border: 1px solid rgba(252, 108, 52, 0.3);
   border-bottom-right-radius: 5px;
 }
 
 .message-time {
   font-size: 0.8rem;
-  color: #7f8c8d;
+  color: rgba(255, 255, 255, 0.7);
   margin-top: 5px;
 }
 
@@ -189,7 +231,10 @@
 
 /* Typing indicator */
 .typing {
-  background: rgba(248, 249, 250, 0.8) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
   padding: 15px 20px !important;
 }
 
@@ -253,42 +298,51 @@
 /* Quick Actions */
 .quick-actions {
   display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 15px;
+  margin-bottom: 30px;
+  margin-top: 20px;
   flex-wrap: wrap;
   justify-content: center;
+  padding: 20px;
+  min-height: 80px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .quick-action-btn {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 2px solid rgba(142, 68, 173, 0.2);
-  padding: 10px 15px;
-  border-radius: 25px;
-  color: #8e44ad;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 12px 20px;
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  min-width: 200px;
+  text-align: center;
 }
 
 .quick-action-btn:hover {
-  background: rgba(142, 68, 173, 0.1);
-  border-color: #8e44ad;
+  background: #fc6c34;
+  color: white;
+  border-color: #fc6c34;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.2);
+  box-shadow: 0 4px 12px rgba(252, 108, 52, 0.3);
 }
 
 /* Message Form */
 .message-form {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-radius: 25px;
-  padding: 15px;
+  border-radius: 20px;
+  padding: 20px;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.18);
 }
 
 .input-container {
@@ -300,17 +354,25 @@
 .message-input {
   flex: 1;
   padding: 15px 20px;
-  border: 2px solid rgba(236, 240, 241, 0.5);
-  border-radius: 25px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.3s;
-  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: white;
 }
 
 .message-input:focus {
-  border-color: #8e44ad;
-  box-shadow: 0 0 0 3px rgba(142, 68, 173, 0.1);
+  border-color: #fc6c34;
+  box-shadow: 0 0 0 2px rgba(252, 108, 52, 0.2);
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.message-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .message-input:disabled {
@@ -321,7 +383,7 @@
 .send-btn {
   width: 50px;
   height: 50px;
-  background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);
+  background: #fc6c34;
   border: none;
   border-radius: 50%;
   color: white;
@@ -331,12 +393,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .send-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #732d91 0%, #8e44ad 100%);
+  background: #e55a2b;
   transform: scale(1.05);
-  box-shadow: 0 5px 15px rgba(142, 68, 173, 0.3);
+  box-shadow: 0 4px 12px rgba(252, 108, 52, 0.4);
 }
 
 .send-btn:disabled {

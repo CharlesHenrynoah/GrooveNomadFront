@@ -361,3 +361,50 @@
   border-color: #e74c3c !important;
   box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
 } 
+
+/* Logo GN - Style identique à la navbar */
+.logo-gn {
+  color: white;
+  font-family: 'Bungee', cursive;
+  font-size: 1.8rem;
+  font-weight: bold;
+  font-style: italic;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  text-shadow: -1px 1px 0 #ccc, -2px 2px 0 #ccc, -3px 3px 0 #ccc, -4px 4px 0 #ccc, -5px 5px 0 #ccc, -6px 6px 0 #ccc, -7px 7px 0 #ccc, -8px 8px 0 #ccc, -9px 9px 0 #ccc, -10px 10px 0 #ccc, -11px 11px 0 #ccc, -12px 12px 0 #ccc;
+  margin: 0 auto 20px;
+  position: relative;
+}
+
+.logo-gn::before {
+  content: 'GN';
+  position: absolute;
+  left: -20px;
+  top: 20px;
+  color: rgba(0, 0, 0, 0.2);
+  filter: blur(3px);
+  text-shadow: none;
+  z-index: -1;
+}
+
+.logo-gn:hover {
+  color: white;
+  transform: scale(1.15);
+  text-decoration: none;
+}
+
+/* Responsive pour le logo */
+@media (max-width: 768px) {
+  .logo-gn {
+    font-size: 1.6rem;
+    margin-bottom: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo-gn {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
+} 

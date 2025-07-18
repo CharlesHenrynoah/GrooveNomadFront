@@ -112,7 +112,7 @@ const Inscription = () => {
     <div 
       className="inscription-page"
       style={{
-        backgroundImage: `url(${process.env.PUBLIC_URL}/inscription.png)`,
+        backgroundImage: `url(${process.env.PUBLIC_URL}/Rufus-Du-Sol-Derek-Rickert-San-Diego-10-31-18-95.jpg)`,
         backgroundPosition: 'center',
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat'
@@ -125,6 +125,7 @@ const Inscription = () => {
           </Link>
         </div>
         <div className="inscription-header">
+          <div className="logo-gn">GN</div>
           <h1 className="inscription-title">Création de compte</h1>
           <p className="inscription-subtitle">
             Rejoignez la communauté GrooveNomad

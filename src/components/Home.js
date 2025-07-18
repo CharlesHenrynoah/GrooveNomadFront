@@ -50,7 +50,7 @@ const GlassNavbar = styled(Box)(({ theme }) => ({
   gap: '25px',
   transition: 'all 0.3s ease',
   width: 'auto',
-  minWidth: '700px',
+  minWidth: '600px',
   boxShadow: '0 4px 24px 0 rgba(31,38,135,0.18)',
   zIndex: 1000,
   [theme.breakpoints.down('md')]: {
@@ -289,7 +289,7 @@ const GlassFooter = styled(Box)(({ theme }) => ({
   boxShadow: '0 -8px 32px 0 rgba(31,38,135,0.18)',
   color: 'white',
   py: 4,
-  mt: 'auto',
+  mt: 0,
   position: 'relative',
   zIndex: 10,
 }));
@@ -331,7 +331,9 @@ const Home = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        backgroundImage: `url(${process.env.PUBLIC_URL}/bghome.png)`,
+        display: 'flex',
+        flexDirection: 'column',
+        backgroundImage: `url(${process.env.PUBLIC_URL}/0acb9d488888dab551223dba404a01c8.jpg)`,
         backgroundPosition: 'center',
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
@@ -357,6 +359,45 @@ const Home = () => {
 
       {/* Navigation */}
       <GlassNavbar>
+        {/* Logo GN */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: '30px',
+            top: '40%',
+            transform: 'translateY(-50%)',
+            color: 'white',
+            fontFamily: 'Bungee, cursive',
+            fontSize: '1.8rem',
+            fontWeight: 'bold',
+            fontStyle: 'italic',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            textDecoration: 'none',
+            textShadow: `-1px 1px 0 #ccc, -2px 2px 0 #ccc, -3px 3px 0 #ccc, -4px 4px 0 #ccc, -5px 5px 0 #ccc, -6px 6px 0 #ccc, -7px 7px 0 #ccc, -8px 8px 0 #ccc, -9px 9px 0 #ccc, -10px 10px 0 #ccc, -11px 11px 0 #ccc, -12px 12px 0 #ccc`,
+            '&::before': {
+              content: '"GN"',
+              position: 'absolute',
+              left: '-20px',
+              top: '20px',
+              color: 'rgba(0, 0, 0, 0.2)',
+              filter: 'blur(3px)',
+              textShadow: 'none',
+              zIndex: -1,
+            },
+            '&:hover': {
+              color: 'white',
+              transform: 'translateY(-50%) scale(1.15)',
+              textDecoration: 'none',
+            },
+            display: { xs: 'none', md: 'block' }, // Caché sur mobile, visible sur desktop
+          }}
+          component={Link}
+          to="/"
+        >
+          GN
+        </Box>
+        
         {navigationItems.map((item, index) => (
           <GlassNavItemNew
             key={index}
@@ -371,7 +412,7 @@ const Home = () => {
       </GlassNavbar>
 
       {/* Hero Section */}
-      <Container maxWidth="md" sx={{ pt: 8, pb: 15, position: 'relative', zIndex: 2 }}>
+      <Container maxWidth="md" sx={{ pt: 8, pb: 15, position: 'relative', zIndex: 2, flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', paddingBottom: '120px' }}>
         <Box textAlign="center" sx={{ mb: 4 }}>
           <Typography
             variant="h1"
@@ -527,63 +568,14 @@ const Home = () => {
 
       {/* Footer */}
       <GlassFooter component="footer">
-        <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={3}>
-              <Typography variant="h6" gutterBottom>
-                GrooveNomad
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                Découvrez votre musique, explorez votre monde. Trouvez les meilleurs événements musicaux près de chez vous.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="h6" gutterBottom>
-                Liens rapides
-              </Typography>
-              <Stack spacing={1}>
-                {['Événements', 'Communauté', 'Chatbot'].map((link) => (
-                  <Typography
-                    key={link}
-                    variant="body2"
-                    component="a"
-                    href="#"
-                    sx={{
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {link}
-                  </Typography>
-                ))}
-              </Stack>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="h6" gutterBottom>
-                Support
-              </Typography>
-              <Stack spacing={1}>
-                {['Contact', 'Aide', 'FAQ', 'Conditions'].map((link) => (
-                  <Typography
-                    key={link}
-                    variant="body2"
-                    component="a"
-                    href="#"
-                    sx={{
-                      color: 'rgba(255, 255, 255, 0.8)',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    {link}
-                  </Typography>
-                ))}
-              </Stack>
-            </Grid>
-            <Grid item xs={12} md={3}>
-              <Typography variant="h6" gutterBottom>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, md: 4 } }}>
+          <Grid container spacing={4} justifyContent={{ xs: 'center', md: 'space-between' }} alignItems="center" sx={{ mx: { xs: -1, md: -2 } }}>
+            {/* Réseaux sociaux à gauche */}
+            <Grid item xs={12} md={6} sx={{ pl: { xs: 0, md: 2 }, textAlign: { xs: 'center', md: 'left' } }}>
+              <Typography variant="h6" gutterBottom sx={{ textAlign: { xs: 'center', md: 'left' }, ml: { xs: 0, md: -1 } }}>
                 Suivez-nous
               </Typography>
-              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={2} justifyContent={{ xs: 'center', md: 'flex-start' }} sx={{ mb: 2, ml: { xs: 0, md: -1 } }}>
                 {[FaTwitter, FaInstagram, FaLinkedin, SiTiktok].map((Icon, index) => (
                   <IconButton
                     key={index}
@@ -597,7 +589,14 @@ const Home = () => {
                   </IconButton>
                 ))}
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+            </Grid>
+            
+            {/* WhatsApp à droite */}
+            <Grid item xs={12} md={6} sx={{ pr: { xs: 0, md: 2 }, textAlign: { xs: 'center', md: 'right' } }}>
+              <Typography variant="h6" gutterBottom sx={{ textAlign: { xs: 'center', md: 'right' }, mr: { xs: 0, md: -1 } }}>
+                Contact
+              </Typography>
+              <Stack direction="row" spacing={2} alignItems="center" justifyContent={{ xs: 'center', md: 'flex-end' }} sx={{ mt: 2, mr: { xs: 0, md: -1 } }}>
                 <IconButton
                   component="a"
                   href="https://wa.me/your-number"

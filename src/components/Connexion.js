@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import './Connexion.css';
 
 // Import de l'image de background
-const backgroundImage = `${process.env.PUBLIC_URL}/backg.png`;
+const backgroundImage = `${process.env.PUBLIC_URL}/RUFUS+DU+SOL_Red+Rocks_20221016_FM_128.jpg`;
 
 const Connexion = () => {
   const [formData, setFormData] = useState({
@@ -83,6 +83,7 @@ const Connexion = () => {
           </Link>
         </div>
         <div className="connexion-header">
+          <div className="logo-gn">GN</div>
           <h1 className="connexion-title">Connexion</h1>
           <p className="connexion-subtitle">
             Connectez-vous à votre compte GrooveNomad
