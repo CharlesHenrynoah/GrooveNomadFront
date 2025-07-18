@@ -8,17 +8,13 @@ import {
   FaCalendarAlt, 
   FaUsers, 
   FaMusic, 
-  FaEuroSign, 
   FaTicketAlt, 
-  FaPlay, 
   FaChevronLeft, 
   FaChevronRight, 
   FaGlobe,
   FaParking,
   FaInfoCircle,
   FaPlane,
-  FaBed,
-  FaUtensils,
   FaTwitter,
   FaInstagram,
   FaLinkedin,
@@ -26,7 +22,7 @@ import {
 } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import { useAuth } from '../context/AuthContext';
-import { getFestivalsFromAirtable } from '../services/airtableService';
+import { getFestivalsFromAirtable, updateInterestedCount, checkUserLike, saveUserLike, removeUserLike } from '../services/airtableService';
 import { 
   Box, 
   Container, 
@@ -34,12 +30,10 @@ import {
   Typography, 
   Stack, 
   IconButton,
-  CircularProgress,
   Alert
 } from '@mui/material';
 import {
   Event as EventIcon,
-  People as PeopleIcon,
   SmartToy as SmartToyIcon,
   Person as PersonIcon,
   Home as HomeIcon,
@@ -47,6 +41,60 @@ import {
 import { styled } from '@mui/material/styles';
 import ReservationForm from './ReservationForm';
 import './EvenementDetail.css';
+
+// Fonction pour détecter si une URL est une vidéo
+const isVideoUrl = (url) => {
+  if (!url) return false;
+  
+  const videoPatterns = [
+    /youtube\.com\/watch/i,
+    /youtube\.com\/embed/i,
+    /youtu\.be\//i,
+    /vimeo\.com/i,
+    /dailymotion\.com/i,
+    /twitch\.tv/i,
+    /\.mp4$/i,
+    /\.webm$/i,
+    /\.ogg$/i,
+    /\.mov$/i,
+    /\.avi$/i
+  ];
+  
+  return videoPatterns.some(pattern => pattern.test(url));
+};
+
+// Fonction pour convertir les URL YouTube en format embed
+const convertToEmbedUrl = (url) => {
+  if (!url) return url;
+  
+  // YouTube watch URL vers embed
+  const youtubeWatchMatch = url.match(/youtube\.com\/watch\?v=([^&]+)/i);
+  if (youtubeWatchMatch) {
+    const embedUrl = `https://www.youtube.com/embed/${youtubeWatchMatch[1]}`;
+    console.log(`🎥 Conversion YouTube: ${url} → ${embedUrl}`);
+    return embedUrl;
+  }
+  
+  // YouTube youtu.be URL vers embed
+  const youtubeShortMatch = url.match(/youtu\.be\/([^?]+)/i);
+  if (youtubeShortMatch) {
+    const embedUrl = `https://www.youtube.com/embed/${youtubeShortMatch[1]}`;
+    console.log(`🎥 Conversion YouTube court: ${url} → ${embedUrl}`);
+    return embedUrl;
+  }
+  
+  // Vimeo URL vers embed
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/i);
+  if (vimeoMatch) {
+    const embedUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    console.log(`🎥 Conversion Vimeo: ${url} → ${embedUrl}`);
+    return embedUrl;
+  }
+  
+  // Retourner l'URL originale si aucune conversion n'est nécessaire
+  console.log(`🎥 URL vidéo inchangée: ${url}`);
+  return url;
+};
 
 // Navbar flottante glassmorphism
 const GlassNavbar = styled(Box)(({ theme }) => ({
@@ -162,10 +210,11 @@ const GlassFooter = styled(Box)(({ theme }) => ({
 
 const EvenementDetail = () => {
   const { id } = useParams();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [isInterested, setIsInterested] = useState(false);
   const [interestedCount, setInterestedCount] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isUpdatingLike, setIsUpdatingLike] = useState(false);
 
   const [festivalsFromAirtable, setFestivalsFromAirtable] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -197,7 +246,6 @@ const EvenementDetail = () => {
   const navigationItems = [
     { icon: <HomeIcon />, text: 'HOME', href: '/' },
     { icon: <EventIcon />, text: 'ÉVÉNEMENTS', href: '/evenements' },
-    { icon: <PeopleIcon />, text: 'COMMUNAUTÉ', href: '#communaute' },
     { icon: <SmartToyIcon />, text: 'CHATBOT', href: '/chatbot' },
     { 
       icon: <PersonIcon />, 
@@ -208,24 +256,61 @@ const EvenementDetail = () => {
 
   // Adapter les données d'Airtable pour l'affichage
   const festivals = useMemo(() => {
-    return festivalsFromAirtable.map(event => ({
+    return festivalsFromAirtable.map(event => {
+      console.log(`🎪 Traitement du festival: ${event.nom}`);
+      console.log(`📹 Médias disponibles:`, {
+        media1: event.media1Festival,
+        media2: event.media2Festival,
+        media3: event.media3Festival
+      });
+      
+      const festival = {
       id: event.id,
       nom: event.nom,
       lieu: `${event.ville}, ${event.pays}`,
       date: event.dates || `${event.dateDebut} - ${event.dateFin}`,
       annee: "2025",
       media: [
-        {
+        // Media 1 Festival en premier (détection automatique vidéo/image)
+        event.media1Festival ? (() => {
+          const isVideo = isVideoUrl(event.media1Festival);
+          const src = isVideo ? convertToEmbedUrl(event.media1Festival) : event.media1Festival;
+          console.log(`🎪 Media 1 Festival - ${event.nom}:`, { isVideo, originalUrl: event.media1Festival, finalSrc: src });
+          return {
+            type: isVideo ? "video" : "image",
+            src: src,
+            title: `${event.nom} - Media 1`
+          };
+        })() : null,
+        // Media 2 Festival en deuxième (détection automatique vidéo/image)
+        event.media2Festival ? (() => {
+          const isVideo = isVideoUrl(event.media2Festival);
+          const src = isVideo ? convertToEmbedUrl(event.media2Festival) : event.media2Festival;
+          console.log(`🎪 Media 2 Festival - ${event.nom}:`, { isVideo, originalUrl: event.media2Festival, finalSrc: src });
+          return {
+            type: isVideo ? "video" : "image",
+            src: src,
+            title: `${event.nom} - Media 2`
+          };
+        })() : null,
+        // Media 3 Festival en troisième (détection automatique vidéo/image)
+        event.media3Festival ? (() => {
+          const isVideo = isVideoUrl(event.media3Festival);
+          const src = isVideo ? convertToEmbedUrl(event.media3Festival) : event.media3Festival;
+          console.log(`🎪 Media 3 Festival - ${event.nom}:`, { isVideo, originalUrl: event.media3Festival, finalSrc: src });
+          return {
+            type: isVideo ? "video" : "image",
+            src: src,
+            title: `${event.nom} - Media 3`
+          };
+        })() : null,
+        // Image de fallback si aucun média n'est disponible
+        !event.media1Festival && !event.media2Festival && !event.media3Festival ? {
           type: "image",
-          src: event.image || "/fete_bg.png",
-          title: `${event.nom} - Image principale`
-        },
-        ...event.medias.map((media, index) => ({
-          type: "image",
-          src: media,
-          title: `${event.nom} - Image ${index + 1}`
-        }))
-      ],
+          src: "/fete_bg.png",
+          title: `${event.nom} - Image par défaut`
+        } : null
+      ].filter(media => media),
       capacite: event.capacite?.toString() || "0",
       genres: [event.genre],
              prix: event.prix && event.prix[0] ? `${event.prix[0]}€` : "Prix à déterminer",
@@ -264,14 +349,106 @@ const EvenementDetail = () => {
       ],
       // Passer toutes les données brutes pour le formulaire
       rawAirtableData: event
-    }));
+    };
+    
+    console.log(`🎪 Festival traité: ${festival.nom}, médias: ${festival.media.length}`);
+    festival.media.forEach((media, index) => {
+      console.log(`📹 Media ${index + 1}: ${media.type} - ${media.src}`);
+    });
+    
+    return festival;
+  });
   }, [festivalsFromAirtable]);
 
   const festival = festivals.find(f => f.id === id) || (festivals.length > 0 ? festivals[0] : null);
 
-  const handleInterest = () => {
-    setIsInterested(!isInterested);
-    setInterestedCount(prev => isInterested ? prev - 1 : prev + 1);
+  // Charger l'état initial du like depuis Airtable et localStorage
+  useEffect(() => {
+    if (festival && user) {
+      // Vérifier si l'utilisateur a déjà liké ce festival
+      const hasLiked = checkUserLike(user.id.toString(), festival.id);
+      setIsInterested(hasLiked);
+      
+      // Charger le compteur depuis les données Airtable
+      const currentCount = parseInt(festival.rawAirtableData?.['Nombre de personne interresse'] || 0);
+      setInterestedCount(currentCount);
+      
+      console.log(`🎪 Festival ${festival.nom} - Utilisateur ${user.id} a déjà liké: ${hasLiked}, Compteur actuel: ${currentCount}`);
+    }
+  }, [festival, user]);
+
+  const handleInterest = async () => {
+    // Vérifier si l'utilisateur est connecté
+    if (!isAuthenticated || !user) {
+      alert('Vous devez être connecté pour marquer votre intérêt pour ce festival.');
+      return;
+    }
+
+    if (!festival) {
+      console.error('Aucun festival sélectionné');
+      return;
+    }
+
+    // Éviter les clics multiples
+    if (isUpdatingLike) {
+      return;
+    }
+
+    setIsUpdatingLike(true);
+    
+    try {
+      const userId = user.id.toString();
+      const festivalId = festival.id;
+      
+      if (isInterested) {
+        // L'utilisateur veut retirer son like
+        console.log(`💔 L'utilisateur ${userId} retire son like pour le festival ${festivalId}`);
+        
+        // Supprimer le like de l'utilisateur
+        const likeSaved = removeUserLike(userId, festivalId);
+        
+        if (likeSaved) {
+          // Décrémenter le compteur dans Airtable
+          const result = await updateInterestedCount(festivalId, -1);
+          
+          if (result.success) {
+            setIsInterested(false);
+            setInterestedCount(result.newCount);
+            console.log(`✅ Like retiré avec succès, nouveau compteur: ${result.newCount}`);
+          } else {
+            console.error('Erreur lors de la mise à jour du compteur:', result.error);
+            alert('Erreur lors de la mise à jour. Veuillez réessayer.');
+          }
+        }
+      } else {
+        // L'utilisateur veut ajouter son like
+        console.log(`💝 L'utilisateur ${userId} ajoute son like pour le festival ${festivalId}`);
+        
+        // Sauvegarder le like de l'utilisateur
+        const likeSaved = saveUserLike(userId, festivalId);
+        
+        if (likeSaved) {
+          // Incrémenter le compteur dans Airtable
+          const result = await updateInterestedCount(festivalId, 1);
+          
+          if (result.success) {
+            setIsInterested(true);
+            setInterestedCount(result.newCount);
+            console.log(`✅ Like ajouté avec succès, nouveau compteur: ${result.newCount}`);
+          } else {
+            console.error('Erreur lors de la mise à jour du compteur:', result.error);
+            alert('Erreur lors de la mise à jour. Veuillez réessayer.');
+          }
+        } else {
+          console.log(`ℹ️ L'utilisateur ${userId} a déjà liké ce festival`);
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la gestion du like:', error);
+      alert('Erreur lors de la mise à jour. Veuillez réessayer.');
+    } finally {
+      setIsUpdatingLike(false);
+    }
   };
 
   const nextSlide = () => {
@@ -288,7 +465,7 @@ const EvenementDetail = () => {
 
 
 
-  // Afficher un loader pendant le chargement
+  // Afficher un message simple pendant le chargement
   if (loading) {
     return (
       <Box 
@@ -304,9 +481,8 @@ const EvenementDetail = () => {
           gap: 2
         }}
       >
-        <CircularProgress size={60} sx={{ color: '#fc6c34' }} />
         <Typography variant="h6" sx={{ color: 'white' }}>
-          Chargement des détails du festival depuis Airtable...
+          Chargement des détails du festival...
         </Typography>
       </Box>
     );
@@ -367,7 +543,7 @@ const EvenementDetail = () => {
     );
   }
 
-  // Afficher un loader si les données ne sont pas encore prêtes
+  // Afficher un message simple si les données ne sont pas encore prêtes
   if (loading || !festival) {
     return (
       <Box 
@@ -383,9 +559,8 @@ const EvenementDetail = () => {
           gap: 2
         }}
       >
-        <CircularProgress size={60} sx={{ color: '#fc6c34' }} />
         <Typography variant="h6" sx={{ color: 'white' }}>
-          Chargement des détails du festival...
+          Chargement en cours...
         </Typography>
       </Box>
     );
@@ -410,9 +585,17 @@ const EvenementDetail = () => {
           <FaArrowLeft /> Retour aux événements
         </Link>
         <div className="header-actions">
-          <button className="action-btn" onClick={handleInterest}>
+          <button 
+            className="action-btn" 
+            onClick={handleInterest}
+            disabled={isUpdatingLike}
+            title={isAuthenticated ? 
+              (isInterested ? 'Retirer votre intérêt' : 'Marquer votre intérêt') : 
+              'Connectez-vous pour marquer votre intérêt'
+            }
+          >
             <FaHeart className={isInterested ? 'interested' : ''} />
-            {interestedCount}
+            {isUpdatingLike ? '...' : interestedCount}
           </button>
           <button className="action-btn">
             <FaShare />
@@ -432,6 +615,9 @@ const EvenementDetail = () => {
                     src={festival.media[currentSlide].src}
                     title={festival.media[currentSlide].title}
                     allowFullScreen
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    style={{ width: '100%', height: '100%' }}
                   />
                 </div>
               ) : (
@@ -510,8 +696,17 @@ const EvenementDetail = () => {
               <div className="lineup-grid">
                 {festival.lineup.map((artist, index) => (
                   <div key={index} className="artist-card">
-                    <img src={artist.photo} alt={artist.nom} />
-                    <span>{artist.nom}</span>
+                    <div className="artist-photo-bubble">
+                      <img 
+                        src={artist.photo || '/logo192.png'} 
+                        alt={artist.nom}
+                        onError={(e) => {
+                          e.target.src = '/logo192.png';
+                        }}
+                      />
+                      <div className="artist-photo-overlay"></div>
+                    </div>
+                    <span className="artist-name">{artist.nom}</span>
                   </div>
                 ))}
               </div>

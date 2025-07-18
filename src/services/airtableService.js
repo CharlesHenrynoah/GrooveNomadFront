@@ -118,38 +118,71 @@ export const getFestivalsFromAirtable = async () => {
           convertPriceToEUR(fields['Price Tier 2'] || 0, fields['Currency'] || 'EUR'),
           convertPriceToEUR(fields['Price Tier 3'] || 0, fields['Currency'] || 'EUR')
         ],
-        // Utiliser Media 1 Festival comme image principale
-        image: fields['Media 1 Festival'] ? fields['Media 1 Festival'][0]?.url : '/fete_bg.png',
+        // Utiliser Media 2 Festival comme image principale
+        image: fields['Media 2 Festival'] ? fields['Media 2 Festival'][0]?.url : '/fete_bg.png',
         
         // Lineup des artistes
         lineup: [
           {
             nom: cleanArtistName(fields['Lineup artiste 1'] || ''),
-            photo: fields['Photo Lineup artiste 1'] ? fields['Photo Lineup artiste 1'][0]?.url : null
+            photo: (() => {
+              const photo = fields['Photo Lineup artiste 1'];
+              console.log(`🎤 Photo Lineup artiste 1 pour ${fields['Festival Name']}:`, photo);
+              return photo ? photo[0]?.url : null;
+            })()
           },
           {
             nom: cleanArtistName(fields['Lineup artiste 2'] || ''),
-            photo: fields['Photo Lineup artiste 2'] ? fields['Photo Lineup artiste 2'][0]?.url : null
+            photo: (() => {
+              const photo = fields['Photo Lineup artiste 2'];
+              console.log(`🎤 Photo Lineup artiste 2 pour ${fields['Festival Name']}:`, photo);
+              return photo ? photo[0]?.url : null;
+            })()
           },
           {
             nom: cleanArtistName(fields['Lineup artiste 3'] || ''),
-            photo: fields['Photo Lineup artiste 3'] ? fields['Photo Lineup artiste 3'][0]?.url : null
+            photo: (() => {
+              const photo = fields['Photo Lineup artiste 3'];
+              console.log(`🎤 Photo Lineup artiste 3 pour ${fields['Festival Name']}:`, photo);
+              return photo ? photo[0]?.url : null;
+            })()
           },
           {
             nom: cleanArtistName(fields['Lineup artiste 4'] || ''),
-            photo: fields['Photo Lineup artiste 4'] ? fields['Photo Lineup artiste 4'][0]?.url : null
+            photo: (() => {
+              const photo = fields['Photo Lineup artiste 4'];
+              console.log(`🎤 Photo Lineup artiste 4 pour ${fields['Festival Name']}:`, photo);
+              return photo ? photo[0]?.url : null;
+            })()
           }
         ].filter(artiste => artiste.nom), // Filtrer les artistes vides
         
-        // Médias supplémentaires
+        // Médias individuels pour un contrôle précis
+        media1Festival: (() => {
+          const media1 = fields['Media 1 Festival'];
+          console.log(`🎬 Debug Media 1 Festival pour ${fields['Festival Name']}:`, media1, typeof media1);
+          return media1 ? (typeof media1 === 'string' ? media1 : media1[0]?.url) : null;
+        })(),
+        media2Festival: (() => {
+          const media2 = fields['Media 2 Festival'];
+          console.log(`🎬 Debug Media 2 Festival pour ${fields['Festival Name']}:`, media2, typeof media2);
+          return media2 ? (typeof media2 === 'string' ? media2 : media2[0]?.url) : null;
+        })(),
+        media3Festival: (() => {
+          const media3 = fields['Media 3 Festival'];
+          console.log(`🎬 Debug Media 3 Festival pour ${fields['Festival Name']}:`, media3, typeof media3);
+          return media3 ? (typeof media3 === 'string' ? media3 : media3[0]?.url) : null;
+        })(),
+        
+        // Médias supplémentaires (pour compatibilité)
         medias: [
-          fields['Media 1 Festival'] ? fields['Media 1 Festival'][0]?.url : null,
-          fields['Media 2 Festival'] ? fields['Media 2 Festival'][0]?.url : null,
-          fields['Media 3 Festival'] ? fields['Media 3 Festival'][0]?.url : null
+          fields['Media 1 Festival'] ? (typeof fields['Media 1 Festival'] === 'string' ? fields['Media 1 Festival'] : fields['Media 1 Festival'][0]?.url) : null,
+          fields['Media 2 Festival'] ? (typeof fields['Media 2 Festival'] === 'string' ? fields['Media 2 Festival'] : fields['Media 2 Festival'][0]?.url) : null,
+          fields['Media 3 Festival'] ? (typeof fields['Media 3 Festival'] === 'string' ? fields['Media 3 Festival'] : fields['Media 3 Festival'][0]?.url) : null
         ].filter(media => media), // Filtrer les médias vides
         
-        // Générer un nombre de likes aléatoire pour l'instant
-        nombreLikes: Math.floor(Math.random() * 9000) + 1000,
+        // Récupérer le nombre d'intéressés depuis Airtable
+        nombreLikes: fields['Nombre de personne interresse'] || 0,
         
         // Notes
         notes: fields['Notes'] || '',
@@ -492,5 +525,98 @@ export const sendDevisToAirtable = async (devisData) => {
   }
 };
 
-const airtableService = { getFestivalsFromAirtable };
+// Fonction pour mettre à jour le nombre de personnes intéressées
+export const updateInterestedCount = async (festivalId, increment = 1) => {
+  try {
+    console.log(`💝 Mise à jour du nombre d'intéressés pour le festival ${festivalId}, increment: ${increment}`);
+    
+    // D'abord, récupérer l'enregistrement actuel
+    const record = await base(TABLE_NAME).find(festivalId);
+    const currentCount = record.fields['Nombre de personne interresse'] || 0;
+    const newCount = Math.max(0, currentCount + increment); // Éviter les valeurs négatives
+    
+    console.log(`📊 Nombre d'intéressés: ${currentCount} → ${newCount}`);
+    
+    // Mettre à jour l'enregistrement
+    const updatedRecord = await base(TABLE_NAME).update([
+      {
+        id: festivalId,
+        fields: {
+          'Nombre de personne interresse': newCount
+        }
+      }
+    ]);
+    
+    console.log(`✅ Nombre d'intéressés mis à jour avec succès pour le festival ${festivalId}`);
+    
+    return {
+      success: true,
+      newCount: newCount,
+      festivalId: festivalId
+    };
+    
+  } catch (error) {
+    console.error(`❌ Erreur lors de la mise à jour du nombre d'intéressés pour le festival ${festivalId}:`, error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
+
+// Fonction pour vérifier si un utilisateur a déjà liké un festival
+export const checkUserLike = (userId, festivalId) => {
+  try {
+    const userLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+    return userLikes[userId] && userLikes[userId].includes(festivalId);
+  } catch (error) {
+    console.error('Erreur lors de la vérification du like utilisateur:', error);
+    return false;
+  }
+};
+
+// Fonction pour enregistrer un like utilisateur
+export const saveUserLike = (userId, festivalId) => {
+  try {
+    const userLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+    
+    if (!userLikes[userId]) {
+      userLikes[userId] = [];
+    }
+    
+    if (!userLikes[userId].includes(festivalId)) {
+      userLikes[userId].push(festivalId);
+      localStorage.setItem('userLikes', JSON.stringify(userLikes));
+      return true;
+    }
+    
+    return false; // L'utilisateur a déjà liké ce festival
+  } catch (error) {
+    console.error('Erreur lors de l\'enregistrement du like utilisateur:', error);
+    return false;
+  }
+};
+
+// Fonction pour supprimer un like utilisateur
+export const removeUserLike = (userId, festivalId) => {
+  try {
+    const userLikes = JSON.parse(localStorage.getItem('userLikes') || '{}');
+    
+    if (userLikes[userId]) {
+      const index = userLikes[userId].indexOf(festivalId);
+      if (index > -1) {
+        userLikes[userId].splice(index, 1);
+        localStorage.setItem('userLikes', JSON.stringify(userLikes));
+        return true;
+      }
+    }
+    
+    return false;
+  } catch (error) {
+    console.error('Erreur lors de la suppression du like utilisateur:', error);
+    return false;
+  }
+};
+
+const airtableService = { getFestivalsFromAirtable, updateInterestedCount, checkUserLike, saveUserLike, removeUserLike };
 export default airtableService; 

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaSearch, FaFilter, FaMapMarkerAlt, FaCalendarAlt, FaEye, FaHeart, FaMusic, FaGlobe, FaUsers, FaTwitter, FaInstagram, FaLinkedin, FaWhatsapp } from 'react-icons/fa';
 import { SiTiktok } from 'react-icons/si';
 import { useAuth } from '../context/AuthContext';
-import { getFestivalsFromAirtable } from '../services/airtableService';
+import { getFestivalsFromAirtable, checkUserLike } from '../services/airtableService';
 import testAirtableConnection from '../testAirtable';
 import { 
   Card, 
@@ -21,11 +21,12 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Pagination
+  Pagination,
+  Tabs,
+  Tab
 } from '@mui/material';
 import {
   Event as EventIcon,
-  People as PeopleIcon,
   SmartToy as SmartToyIcon,
   Person as PersonIcon,
   Home as HomeIcon,
@@ -188,7 +189,7 @@ const StyledPagination = styled(Pagination)(({ theme }) => ({
 }));
 
 const Evenements = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilters, setActiveFilters] = useState({
     genre: [],
@@ -202,23 +203,36 @@ const Evenements = () => {
   const [festivals, setFestivals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState('');
   
   // Nouveaux états pour la pagination
   const [page, setPage] = useState(1);
   const eventsPerPage = 6;
+  
+  // Onglets
+  const [activeTab, setActiveTab] = useState(0); // 0: Tous les événements, 1: Événements likés
+  
+  // Fonction pour filtrer les événements likés
+  const getLikedEvents = () => {
+    if (!user) return [];
+    return festivals.filter(event => checkUserLike(user.id.toString(), event.id));
+  };
+  
+  // Fonction pour gérer le changement d'onglet
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   // Réinitialiser la page quand les filtres ou la recherche changent
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, activeFilters]);
+  }, [searchTerm, activeFilters, activeTab]);
 
   // Fonction pour charger les données des événements depuis Airtable
   const loadEventData = async () => {
     try {
       setLoading(true);
       setError(null);
-      setDebugInfo('Tentative de connexion à Airtable...');
+      // Debug: Tentative de connexion à Airtable (console seulement)
       
       console.log('🚀 Début du chargement des festivals depuis Airtable...');
       
@@ -230,7 +244,6 @@ const Evenements = () => {
       const airtableEvents = await getFestivalsFromAirtable();
       
       console.log('📋 Festivals récupérés bruts:', airtableEvents.length);
-      setDebugInfo(`${airtableEvents.length} festivals récupérés depuis Airtable`);
       
       if (airtableEvents.length === 0) {
         setError('Aucun festival trouvé dans la table Airtable. Vérifiez que la table "festivals" contient des données.');
@@ -248,7 +261,13 @@ const Evenements = () => {
       });
       
       console.log('✅ Festivals valides:', validEvents.length);
-      setDebugInfo(`${validEvents.length} festivals valides chargés`);
+      
+      // Log pour déboguer le nombre de personnes intéressées
+      validEvents.forEach((event, index) => {
+        console.log(`🎪 Festival ${index + 1}: ${event.nom} - Nombre de personnes intéressées: ${event.nombreLikes || 0}`);
+      });
+      
+      // Debug: Festivals valides chargés (console seulement)
       
       setFestivals(validEvents);
       setLoading(false);
@@ -261,7 +280,7 @@ const Evenements = () => {
       console.error('❌ Erreur lors du chargement des événements:', error);
       const errorMessage = error.message || 'Erreur inconnue';
       setError(`Impossible de charger les événements depuis Airtable: ${errorMessage}`);
-      setDebugInfo(`Erreur: ${errorMessage}`);
+      // Debug: Erreur (console seulement)
       setLoading(false);
       
       // En cas d'erreur, utiliser des données de fallback
@@ -287,9 +306,9 @@ const Evenements = () => {
           devise: "EUR",
           prix: [299, 399, 499],
           image: "/fete_bg.png",
-          nombreLikes: null,
+          nombreLikes: 0,
           dates: "2025-07-18 - 2025-07-21",
-          interessees: null
+          interessees: 0
         }
       ];
       
@@ -342,7 +361,7 @@ const Evenements = () => {
     villeEvenement: event.ville,
     paysEvenement: event.pays,
     styleEvenement: event.genre,
-    nombreLikesEvenement: null,
+    nombreLikesEvenement: event.nombreLikes || 0,
     imageEvenement: event.image,
     capaciteEvenement: event.capacite,
     dureeEvenement: event.duree,
@@ -446,7 +465,8 @@ const Evenements = () => {
 
   // Filtrer les événements
   useEffect(() => {
-    let filtered = festivals;
+    // Commencer par sélectionner les événements selon l'onglet actuel
+    let filtered = activeTab === 1 ? getLikedEvents() : festivals;
 
     // Filtre par recherche textuelle
     if (searchTerm) {
@@ -496,7 +516,7 @@ const Evenements = () => {
     }
 
     setFilteredEvents(filtered);
-  }, [searchTerm, activeFilters, festivals]);
+  }, [searchTerm, activeFilters, festivals, activeTab, user]);
 
   // Initialiser les événements filtrés
   useEffect(() => {
@@ -573,7 +593,6 @@ const Evenements = () => {
   const navigationItems = [
     { icon: <HomeIcon />, text: 'HOME', href: '/' },
     { icon: <EventIcon />, text: 'ÉVÉNEMENTS', href: '/evenements' },
-    { icon: <PeopleIcon />, text: 'COMMUNAUTÉ', href: '#communaute' },
     { icon: <SmartToyIcon />, text: 'CHATBOT', href: '/chatbot' },
     { 
       icon: <PersonIcon />, 
@@ -599,14 +618,6 @@ const Evenements = () => {
         }}
       >
         <CircularProgress size={60} sx={{ color: '#fc6c34' }} />
-        <Typography variant="h6" sx={{ color: 'white' }}>
-          Chargement des festivals depuis Airtable...
-        </Typography>
-        {debugInfo && (
-          <Typography variant="body2" sx={{ color: 'white', mt: 1 }}>
-            {debugInfo}
-          </Typography>
-        )}
       </Box>
     );
   }
@@ -663,14 +674,7 @@ const Evenements = () => {
               {error}
             </Alert>
           )}
-          {debugInfo && (
-            <Alert 
-              severity="info" 
-              sx={{ mt: 2, maxWidth: '500px', mx: 'auto' }}
-            >
-              {debugInfo}
-            </Alert>
-          )}
+
         </div>
       </section>
 
@@ -772,6 +776,46 @@ const Evenements = () => {
 
       {/* Events Grid */}
       <Container maxWidth="lg" sx={{ py: 8, flex: 1, paddingBottom: '120px' }}>
+        {/* Onglets */}
+        <Box sx={{ mb: 4 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            aria-label="onglets événements"
+            sx={{
+              '& .MuiTab-root': {
+                color: 'rgba(255, 255, 255, 0.7)',
+                fontSize: '1rem',
+                fontWeight: 600,
+              },
+              '& .MuiTab-root.Mui-selected': {
+                color: '#fc6c34',
+              },
+              '& .MuiTabs-indicator': {
+                backgroundColor: '#fc6c34',
+              },
+            }}
+          >
+            <Tab 
+              label="Tous les événements" 
+              sx={{ 
+                textTransform: 'none',
+                minWidth: 'auto',
+                mr: 2 
+              }} 
+            />
+            <Tab 
+              label={`Événements likés ${isAuthenticated && user ? `(${getLikedEvents().length})` : ''}`}
+              sx={{ 
+                textTransform: 'none',
+                minWidth: 'auto',
+                opacity: isAuthenticated ? 1 : 0.5
+              }}
+              disabled={!isAuthenticated}
+            />
+          </Tabs>
+        </Box>
+
         {festivals.length === 0 && !loading ? (
           <Box sx={{ 
             textAlign: 'center', 
@@ -798,6 +842,37 @@ const Evenements = () => {
               Recharger les données
             </Button>
           </Box>
+        ) : activeTab === 1 && getLikedEvents().length === 0 ? (
+          <Box sx={{ 
+            textAlign: 'center', 
+            py: 8,
+            color: 'text.secondary'
+          }}>
+            <FaHeart style={{ fontSize: '3rem', marginBottom: '1rem', color: '#fc6c34' }} />
+            <Typography variant="h5" gutterBottom>
+              Aucun événement liké
+            </Typography>
+            <Typography variant="body1" sx={{ mb: 3 }}>
+              {isAuthenticated ? 
+                "Vous n'avez pas encore liké d'événements. Explorez les festivals et cliquez sur le cœur pour marquer vos préférés !" :
+                "Connectez-vous pour voir vos événements likés"
+              }
+            </Typography>
+            {isAuthenticated && (
+              <Button
+                variant="contained"
+                onClick={() => setActiveTab(0)}
+                sx={{
+                  backgroundColor: '#fc6c34',
+                  '&:hover': {
+                    backgroundColor: '#c8501a',
+                  },
+                }}
+              >
+                Découvrir les événements
+              </Button>
+            )}
+          </Box>
         ) : (
           <>
             <Grid container spacing={3}>
@@ -815,6 +890,9 @@ const Evenements = () => {
                   prixEvenement,
                   descriptionEvenement
                 } = getEventProperties(event);
+                
+                // Log pour déboguer l'affichage
+                console.log(`🎪 Affichage festival ${nomEvenement}: nombreLikesEvenement = ${nombreLikesEvenement}, event.nombreLikes = ${event.nombreLikes}`);
 
                 return (
                   <Grid item xs={12} sm={6} md={4} key={event.id}>
@@ -945,7 +1023,7 @@ const Evenements = () => {
                               }}
                             >
                               <FaHeart className="icon-orange" />
-                              {nombreLikesEvenement === null ? 'null' : nombreLikesEvenement}
+                              {nombreLikesEvenement || 0}
                             </Typography>
                           </Box>
                         </CardContent>

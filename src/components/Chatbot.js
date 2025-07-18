@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FaPaperPlane, FaRobot, FaUser, FaArrowLeft } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import airtableService from '../services/airtableService';
@@ -8,6 +8,7 @@ import './Chatbot.css';
 
 const Chatbot = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -45,8 +46,8 @@ const Chatbot = () => {
         setFestivalsData(data);
         console.log('📊 Données festivals chargées pour le chatbot:', data.length, 'festivals');
         
-        // Ajouter un message une fois les données chargées
-        if (data.length > 0) {
+        // Ajouter un message une fois les données chargées SEULEMENT s'il n'y a pas de message initial
+        if (data.length > 0 && !location.state?.initialMessage) {
           const dataLoadedMessage = {
             id: Date.now(),
             text: `🎉 Parfait ! J'ai chargé ${data.length} festivals dans ma base de données. Je peux maintenant vous aider à trouver des informations précises !`,
@@ -72,7 +73,76 @@ const Chatbot = () => {
     };
 
     loadFestivalsData();
-  }, []);
+  }, [location.state]);
+
+  // Gérer le message initial depuis la page d'accueil
+  useEffect(() => {
+    if (location.state?.initialMessage && festivalsData.length > 0) {
+      const initialMessage = location.state.initialMessage;
+      console.log('📩 Message initial reçu depuis la page d\'accueil:', initialMessage);
+      
+      // Ajouter le message de chargement des données d'abord
+      const dataLoadedMessage = {
+        id: Date.now(),
+        text: `🎉 Parfait ! J'ai chargé ${festivalsData.length} festivals dans ma base de données. Je peux maintenant vous aider à trouver des informations précises !`,
+        sender: 'bot',
+        timestamp: new Date(),
+        festivals: null
+      };
+      
+      // Ajouter le message de l'utilisateur
+      const userMessage = {
+        id: Date.now() + 1,
+        text: initialMessage,
+        sender: 'user',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, dataLoadedMessage, userMessage]);
+      setIsTyping(true);
+      
+      // Traiter le message automatiquement
+      setTimeout(async () => {
+        try {
+          const botResponse = await getBotResponse(initialMessage);
+          
+          const typingDuration = Math.min(Math.max(botResponse.text.length * 20, 1500), 4000);
+          
+          setTimeout(() => {
+            const botMessage = {
+              id: Date.now() + 1,
+              text: botResponse.text,
+              sender: 'bot',
+              timestamp: new Date(),
+              festivals: botResponse.festivals
+            };
+            
+            setMessages(prev => [...prev, botMessage]);
+            setIsTyping(false);
+          }, typingDuration);
+          
+        } catch (error) {
+          console.error('❌ Erreur lors du traitement du message initial:', error);
+          
+          setTimeout(() => {
+            const errorMessage = {
+              id: Date.now() + 1,
+              text: "Désolé, je rencontre des difficultés techniques. Pouvez-vous réessayer votre question ? 🤖",
+              sender: 'bot',
+              timestamp: new Date(),
+              festivals: null
+            };
+            
+            setMessages(prev => [...prev, errorMessage]);
+            setIsTyping(false);
+          }, 1500);
+        }
+      }, 500);
+      
+      // Nettoyer le state pour éviter de retraiter le message
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, festivalsData]);
 
   // Vérifier si la question est sur un sujet musical autorisé
   const isMusicalTopic = (message) => {

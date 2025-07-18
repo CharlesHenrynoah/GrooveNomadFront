@@ -13,7 +13,6 @@ import {
 } from '@mui/material';
 import {
   Event as EventIcon,
-  People as PeopleIcon,
   SmartToy as SmartToyIcon,
   Person as PersonIcon,
   Home as HomeIcon
@@ -348,7 +347,6 @@ const MonCompte = () => {
   const navigationItems = [
     { icon: <HomeIcon />, text: 'HOME', href: '/' },
     { icon: <EventIcon />, text: 'ÉVÉNEMENTS', href: '/evenements' },
-    { icon: <PeopleIcon />, text: 'COMMUNAUTÉ', href: '#communaute' },
     { icon: <SmartToyIcon />, text: 'CHATBOT', href: '/chatbot' },
     { 
       icon: <PersonIcon />, 
