@@ -60,18 +60,6 @@ GrooveNomadFront/
 
 ---
 
-## 📐 Schéma d’Architecture
-
-```mermaid
-graph TD
-  A[👩‍💻 Utilisateur] -->|Requêtes HTTP| B[🌐 Frontend (React)]
-  B -->|API REST| C[🖥️ Backend (Node.js + Express)]
-  C -->|Requêtes SQL| D[(🗄️ Base de données PostgreSQL Neon)]
-  C -->|API externe| E[☁️ Airtable API]
-```
-
----
-
 ## 🛠️ Technologies utilisées
 
 - **Frontend** : React 18, React Router, Axios, Tailwind CSS
